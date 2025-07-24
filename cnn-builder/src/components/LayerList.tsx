@@ -18,7 +18,7 @@ const LayerList: React.FC<LayerListProps> = ({ layers, onEdit, onRemove}) => {
                         <button onClick={() => onEdit(idx)}>Edit</button>
                         <button onClick={() => onRemove(idx)}>Remove</button>
                     </li>
-                )}
+                ))}
             </ul>
         </div>
     );
