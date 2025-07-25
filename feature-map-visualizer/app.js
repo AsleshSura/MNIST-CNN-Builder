@@ -370,13 +370,18 @@ function displayInputImage() {
     
     // Create canvas to display the image
     const canvas = document.createElement('canvas');
-    canvas.width = 112; // 28 * 4 for better visibility
-    canvas.height = 112;
+    canvas.width = 196; // 28 * 7 for better visibility
+    canvas.height = 196;
     canvas.style.border = '2px solid #2196F3';
     canvas.style.borderRadius = '8px';
     canvas.style.imageRendering = 'pixelated';
+    canvas.classList.add('pixel-crisp');
     
     const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
     
     // Get image data from tensor
     inputImage.data().then(data => {
@@ -397,14 +402,14 @@ function displayInputImage() {
         tempCanvas.width = 28;
         tempCanvas.height = 28;
         const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.imageSmoothingEnabled = false;
+        tempCtx.mozImageSmoothingEnabled = false;
+        tempCtx.webkitImageSmoothingEnabled = false;
+        tempCtx.msImageSmoothingEnabled = false;
         tempCtx.putImageData(imageData, 0, 0);
         
         // Scale up for display with pixel-perfect rendering
-        ctx.imageSmoothingEnabled = false;
-        ctx.mozImageSmoothingEnabled = false;
-        ctx.webkitImageSmoothingEnabled = false;
-        ctx.msImageSmoothingEnabled = false;
-        ctx.drawImage(tempCanvas, 0, 0, 112, 112);
+        ctx.drawImage(tempCanvas, 0, 0, 196, 196);
     });
     
     // Clear previous content and add canvas

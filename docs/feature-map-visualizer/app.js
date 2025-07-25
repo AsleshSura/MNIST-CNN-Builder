@@ -370,13 +370,18 @@ function displayInputImage() {
     
     // Create canvas to display the image
     const canvas = document.createElement('canvas');
-    canvas.width = 112; // 28 * 4 for better visibility
-    canvas.height = 112;
+    canvas.width = 196; // 28 * 7 for better visibility
+    canvas.height = 196;
     canvas.style.border = '2px solid #2196F3';
     canvas.style.borderRadius = '8px';
     canvas.style.imageRendering = 'pixelated';
+    canvas.classList.add('pixel-crisp');
     
     const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
     
     // Get image data from tensor
     inputImage.data().then(data => {
@@ -397,14 +402,14 @@ function displayInputImage() {
         tempCanvas.width = 28;
         tempCanvas.height = 28;
         const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.imageSmoothingEnabled = false;
+        tempCtx.mozImageSmoothingEnabled = false;
+        tempCtx.webkitImageSmoothingEnabled = false;
+        tempCtx.msImageSmoothingEnabled = false;
         tempCtx.putImageData(imageData, 0, 0);
         
         // Scale up for display with pixel-perfect rendering
-        ctx.imageSmoothingEnabled = false;
-        ctx.mozImageSmoothingEnabled = false;
-        ctx.webkitImageSmoothingEnabled = false;
-        ctx.msImageSmoothingEnabled = false;
-        ctx.drawImage(tempCanvas, 0, 0, 112, 112);
+        ctx.drawImage(tempCanvas, 0, 0, 196, 196);
     });
     
     // Clear previous content and add canvas
@@ -465,12 +470,17 @@ async function displayFeatureMaps(featureMaps, layer) {
             item.className = 'feature-map-item';
             
             const canvas = document.createElement('canvas');
-            const displaySize = Math.max(height * 8, 150); // Large display size
+            const displaySize = Math.max(height * 12, 180); // Larger display size for better visibility
             canvas.width = displaySize;
             canvas.height = displaySize;
             canvas.className = 'feature-map-canvas';
+            canvas.style.imageRendering = 'pixelated';
             
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
             
             // Extract feature map data for this channel
             const mapData = new Float32Array(height * width);
@@ -493,6 +503,10 @@ async function displayFeatureMaps(featureMaps, layer) {
             tempCanvas.width = width;
             tempCanvas.height = height;
             const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.imageSmoothingEnabled = false;
+            tempCtx.mozImageSmoothingEnabled = false;
+            tempCtx.webkitImageSmoothingEnabled = false;
+            tempCtx.msImageSmoothingEnabled = false;
             
             const imageData = tempCtx.createImageData(width, height);
             const imgData = imageData.data;
@@ -554,6 +568,13 @@ async function displayFeatureMaps(featureMaps, layer) {
         const max = Math.max(...data);
         const range = max - min;
         rangeIndicator.textContent = `Activation Range: ${min.toFixed(3)} to ${max.toFixed(3)}`;
+        rangeIndicator.style.fontSize = '14px';
+        rangeIndicator.style.fontWeight = 'bold';
+        rangeIndicator.style.color = '#ffffff';
+        rangeIndicator.style.padding = '10px';
+        rangeIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+        rangeIndicator.style.borderRadius = '5px';
+        rangeIndicator.style.marginBottom = '15px';
         container.appendChild(rangeIndicator);
         
         // Create a container with relative positioning for bars
@@ -593,35 +614,80 @@ async function displayFeatureMaps(featureMaps, layer) {
             // Bar container
             const barContainer = document.createElement('div');
             barContainer.className = 'dense-activation-bar';
+            barContainer.style.width = '10px';
+            barContainer.style.minWidth = '10px';
             
             // The actual bar
             const bar = document.createElement('div');
             bar.className = 'dense-bar';
             bar.style.height = `${height}px`;
+            bar.style.width = '8px';
+            bar.style.minWidth = '8px';
+            // Use color for differentiation
+            const hue = Math.floor(normalized * 240); // blue to red
+            bar.style.background = `hsl(${hue}, 80%, 60%)`;
             
             // Value tooltip that appears on hover
             const valueTooltip = document.createElement('div');
             valueTooltip.className = 'activation-value';
-            valueTooltip.textContent = value.toFixed(3);
+            valueTooltip.textContent = `#${i+1}: ${value.toFixed(3)}`;
             
             // Neuron number label
             const neuronLabel = document.createElement('div');
             neuronLabel.className = 'neuron-number';
             neuronLabel.textContent = i + 1; // 1-indexed for user clarity
+            neuronLabel.style.fontSize = '8px';
+            neuronLabel.style.position = 'absolute';
+            neuronLabel.style.bottom = '-15px';
+            neuronLabel.style.color = 'white';
             
+            // Add to DOM
             barContainer.appendChild(bar);
             barContainer.appendChild(neuronLabel);
             barContainer.appendChild(valueTooltip);
+            
+            // Debug - add direct inline styles for visibility
+            barContainer.style.display = 'flex';
+            barContainer.style.flexDirection = 'column';
+            barContainer.style.alignItems = 'center';
+            barContainer.style.justifyContent = 'flex-end';
+            barContainer.style.position = 'relative';
+            barContainer.style.height = '100%';
+            
             barsContainer.appendChild(barContainer);
         }
         
         container.appendChild(barsContainer);
+        
+        // Debug log for developers
+        console.log("Dense layer visualization:", {
+            units,
+            maxUnitsToShow,
+            min,
+            max,
+            range,
+            barsCreated: barsContainer.childElementCount,
+            container: container,
+            barsContainer: barsContainer
+        });
         
         // Information note
         const note = document.createElement('p');
         note.textContent = 'Each bar represents one neuron\'s activation level';
         note.style.cssText = 'text-align: center; margin-top: 10px; font-size: 0.9rem;';
         container.appendChild(note);
+        
+        // Add debug information
+        const debugInfo = document.createElement('div');
+        debugInfo.style.padding = '10px';
+        debugInfo.style.marginTop = '20px';
+        debugInfo.style.backgroundColor = 'rgba(255,0,0,0.2)';
+        debugInfo.style.borderRadius = '5px';
+        debugInfo.innerHTML = `
+            <p style="margin: 0; color: white;">Debug: ${maxUnitsToShow} neuron bars should appear above</p>
+            <p style="margin: 5px 0 0; color: white;">If bars are not visible, please check browser console</p>
+        `;
+        container.appendChild(debugInfo);
         
         if (units > 500) {
             const limitNote = document.createElement('p');

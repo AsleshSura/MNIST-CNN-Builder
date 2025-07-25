@@ -1,12 +1,34 @@
 /* Feature Map Quality Enhancement */
 
-/* Improve image rendering quality */
-img, canvas, .feature-map-item img {
-    image-rendering: -webkit-optimize-contrast;  /* Chrome */
-    image-rendering: crisp-edges;                /* Firefox */
-    image-rendering: pixelated;                  /* Modern browsers */
-    -ms-interpolation-mode: nearest-neighbor;    /* IE */
+/* Debug styles to verify CSS is loading */
+body::after {
+    content: "Feature map quality CSS loaded";
+    position: fixed;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0, 255, 0, 0.2);
+    color: lime;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* Improve image rendering quality - maximum aggressive settings */
+img, 
+canvas, 
+.feature-map-item img, 
+.feature-map-canvas,
+.feature-maps-grid canvas,
+#image-preview canvas {
+    image-rendering: -webkit-optimize-contrast !important;  /* Chrome */
+    image-rendering: crisp-edges !important;                /* Firefox */
+    image-rendering: pixelated !important;                  /* Modern browsers */
+    -ms-interpolation-mode: nearest-neighbor !important;    /* IE */
     transform: translateZ(0);                    /* Force GPU acceleration */
+    backface-visibility: hidden;                 /* Additional GPU hint */
+    object-fit: none !important;                 /* Prevent browser scaling */
 }
 
 /* Ensure all feature maps display with crisp pixels */
