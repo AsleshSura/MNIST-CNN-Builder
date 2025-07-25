@@ -65,6 +65,11 @@ function cleanupResources() {
             inputImage.dispose();
             console.log('Input image disposed');
         }
+        // Clean up TensorFlow.js memory
+        if (typeof tf !== 'undefined') {
+            tf.disposeVariables();
+            console.log('TensorFlow.js variables disposed');
+        }
     } catch (e) {
         console.warn('Error during cleanup:', e.message);
     }
