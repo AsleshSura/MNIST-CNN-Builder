@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug CNN Visualizer</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #1a1a2e; color: white; }
+        .btn { background: #4CAF50; color: white; border: none; padding: 10px 20px; margin: 10px; border-radius: 5px; cursor: pointer; }
+        .status { padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 10px 0; }
+        #debug { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>Debug CNN Feature Map Visualizer</h1>
+    
+    <div class="status" id="tf-status">Checking TensorFlow.js...</div>
+    
+    <button class="btn" id="load-model-btn" onclick="testModelLoad()" disabled>Test Model Load</button>
+    <button class="btn" id="load-image-btn" onclick="testImageLoad()" disabled>Test Image Load</button>
+    <button class="btn" id="test-layer-btn" onclick="testLayerViz()" disabled>Test Layer Viz</button>
+    
+    <div id="debug"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script>
+        let debugLog = [];
+        let model = null;
+        let inputImage = null;
+        
+        function log(message) {
+            console.log(message);
+            debugLog.push(new Date().toLocaleTimeString() + ': ' + message);
+            document.getElementById('debug').innerHTML = debugLog.slice(-10).join('<br>');
+        }
+        
+        window.addEventListener('load', async function() {
+            log('Page loaded, waiting for TensorFlow.js...');
+            
+            let attempts = 0;
+            while (typeof tf === 'undefined' && attempts < 10) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+                log(`Attempt ${attempts} to find TensorFlow.js...`);
+            }
+            
+            if (typeof tf === 'undefined') {
+                document.getElementById('tf-status').innerHTML = '❌ TensorFlow.js FAILED to load';
+                log('ERROR: TensorFlow.js not loaded');
+                return;
+            }
+            
+            document.getElementById('tf-status').innerHTML = `✅ TensorFlow.js loaded (${tf.version})`;
+            log(`TensorFlow.js loaded successfully: ${tf.version}`);
+            log(`Backend: ${tf.getBackend()}`);
+            
+            document.getElementById('load-model-btn').disabled = false;
+        });
+        
+        async function testModelLoad() {
+            try {
+                log('Creating demo model...');
+                
+                await tf.ready();
+                log('TensorFlow.js ready');
+                
+                model = tf.sequential({
+                    layers: [
+                        tf.layers.conv2d({
+                            inputShape: [28, 28, 1],
+                            filters: 4,
+                            kernelSize: 3,
+                            activation: 'relu',
+                            name: 'conv2d_1'
+                        }),
+                        tf.layers.flatten({ name: 'flatten' }),
+                        tf.layers.dense({
+                            units: 10,
+                            activation: 'relu',
+                            name: 'dense_1'
+                        })
+                    ]
+                });
+                
+                log(`Model created with ${model.layers.length} layers`);
+                
+                document.getElementById('load-image-btn').disabled = false;
+                
+            } catch (error) {
+                log(`ERROR creating model: ${error.message}`);
+            }
+        }
+        
+        async function testImageLoad() {
+            try {
+                log('Creating demo image...');
+                
+                const imageData = new Float32Array(28 * 28);
+                for (let i = 0; i < 28 * 28; i++) {
+                    imageData[i] = Math.random();
+                }
+                
+                inputImage = tf.tensor4d(imageData, [1, 28, 28, 1]);
+                log(`Image created with shape: ${inputImage.shape}`);
+                
+                document.getElementById('test-layer-btn').disabled = false;
+                
+            } catch (error) {
+                log(`ERROR creating image: ${error.message}`);
+            }
+        }
+        
+        async function testLayerViz() {
+            try {
+                log('Testing layer visualization...');
+                
+                if (!model || !inputImage) {
+                    log('ERROR: Model or image not loaded');
+                    return;
+                }
+                
+                // Test forward pass
+                let output = inputImage;
+                for (let i = 0; i < model.layers.length; i++) {
+                    const layer = model.layers[i];
+                    output = layer.apply(output);
+                    log(`Layer ${i} (${layer.name}): ${output.shape}`);
+                }
+                
+                // Test data extraction
+                const data = await output.data();
+                log(`Final output data length: ${data.length}`);
+                log(`Data range: ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}`);
+                
+                log('✅ All tests passed!');
+                
+            } catch (error) {
+                log(`ERROR in layer visualization: ${error.message}`);
+                console.error('Full error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

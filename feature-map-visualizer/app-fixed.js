@@ -65,8 +65,6 @@ function cleanupResources() {
             inputImage.dispose();
             console.log('Input image disposed');
         }
-        // Clean up TensorFlow.js memory
-        tf.engine().endScope();
     } catch (e) {
         console.warn('Error during cleanup:', e.message);
     }
@@ -74,6 +72,8 @@ function cleanupResources() {
 
 // Create a demo CNN model
 async function createDemoModel() {
+    await tf.ready();
+    
     const demoModel = tf.sequential({
         layers: [
             tf.layers.conv2d({
@@ -152,7 +152,14 @@ function generateDemoImage() {
 // Load demo model - GLOBAL function for onclick
 async function loadDemoModel() {
     try {
+        // Check if TensorFlow.js is available
+        if (typeof tf === 'undefined') {
+            showStatus('❌ TensorFlow.js not loaded. Please wait and try again.');
+            return;
+        }
+        
         showStatus('Creating demo CNN model...', true);
+        console.log('Starting model creation...');
         
         // Clean up existing model
         if (model && !model.isDisposedInternal) {
@@ -163,11 +170,8 @@ async function loadDemoModel() {
             }
         }
         
-        // Wait for TensorFlow.js to be ready
-        await tf.ready();
-        console.log('TensorFlow.js backend:', tf.getBackend());
-        
         model = await createDemoModel();
+        console.log('Model created successfully');
         
         // Extract layer information with error handling
         layers = model.layers.map((layer, index) => {
@@ -189,6 +193,8 @@ async function loadDemoModel() {
             }
         });
         
+        console.log('Extracted layer information:', layers);
+        
         displayModelInfo();
         displayLayers();
         
@@ -204,6 +210,7 @@ async function loadDemoModel() {
         }
         
         showStatus('Demo model loaded successfully! Now load an image.');
+        console.log('Model loading completed successfully');
         
     } catch (error) {
         console.error('Error loading demo model:', error);
@@ -475,10 +482,6 @@ async function selectLayer(layerIndex) {
     } catch (error) {
         console.error('Error generating feature maps:', error);
         showStatus('Error generating feature maps: ' + error.message);
-        
-        // Clean up any tensors that might have been created
-        tf.engine().endScope();
-        tf.engine().startScope();
     }
 }
 
@@ -574,42 +577,11 @@ async function displayFeatureMaps(featureMaps, layer) {
         border: 1px solid rgba(33, 150, 243, 0.3);
         box-shadow: 0 8px 25px rgba(33, 150, 243, 0.15);
     `;
-    
-    // Create elements manually for better text rendering control
-    const title = document.createElement('h3');
-    title.textContent = `${layer.name} (${layer.getClassName()})`;
-    title.style.cssText = `
-        color: #64B5F6; 
-        font-size: 2rem; 
-        margin-bottom: 15px; 
-        font-family: monospace, 'Courier New', Courier;
-        font-weight: bold;
-        letter-spacing: 0.5px;
+    layerInfo.innerHTML = `
+        <h3 style="color: #64B5F6; font-size: 2rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);">${layer.name} (${layer.getClassName()})</h3>
+        <p style="font-size: 1.2rem; margin: 10px 0; color: rgb(255, 255, 255);"><strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}</p>
+        <p style="font-size: 1.2rem; margin: 10px 0; color: rgb(255, 255, 255);"><strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}</p>
     `;
-    
-    const outputShape = document.createElement('p');
-    outputShape.innerHTML = `<strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}`;
-    outputShape.style.cssText = `
-        font-size: 1.2rem; 
-        margin: 10px 0; 
-        color: rgba(255, 255, 255, 0.9);
-        font-family: monospace, 'Courier New', Courier;
-        letter-spacing: 0.5px;
-    `;
-    
-    const activationRange = document.createElement('p');
-    activationRange.innerHTML = `<strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}`;
-    activationRange.style.cssText = `
-        font-size: 1.2rem; 
-        margin: 10px 0; 
-        color: rgba(255, 255, 255, 0.9);
-        font-family: monospace, 'Courier New', Courier;
-        letter-spacing: 0.5px;
-    `;
-    
-    layerInfo.appendChild(title);
-    layerInfo.appendChild(outputShape);
-    layerInfo.appendChild(activationRange);
     visualizationContent.appendChild(layerInfo);
     
     if (shape.length === 4) {
@@ -632,13 +604,17 @@ async function displayFeatureMaps(featureMaps, layer) {
             item.className = 'feature-map-item';
             
             const canvas = document.createElement('canvas');
-            const displaySize = Math.max(height * 10, 180); // Even larger display size for clarity
+            const displaySize = Math.max(height * 12, 180); // Larger display size for better visibility
             canvas.width = displaySize;
             canvas.height = displaySize;
-            canvas.className = 'feature-map-canvas crisp-render';
+            canvas.className = 'feature-map-canvas';
             canvas.style.imageRendering = 'pixelated';
             
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
             
             // Extract feature map data for this channel
             const mapData = new Float32Array(height * width);
@@ -660,7 +636,6 @@ async function displayFeatureMaps(featureMaps, layer) {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = width;
             tempCanvas.height = height;
-            tempCanvas.style.imageRendering = 'pixelated';
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.imageSmoothingEnabled = false;
             tempCtx.mozImageSmoothingEnabled = false;
@@ -682,33 +657,13 @@ async function displayFeatureMaps(featureMaps, layer) {
             
             tempCtx.putImageData(imageData, 0, 0);
             
-            // Scale up for display with ULTRA pixel-perfect rendering
+            // Scale up for display with pixel-perfect rendering
             ctx.imageSmoothingEnabled = false;
             ctx.mozImageSmoothingEnabled = false;
             ctx.webkitImageSmoothingEnabled = false;
             ctx.msImageSmoothingEnabled = false;
+            ctx.drawImage(tempCanvas, 0, 0, displaySize, displaySize);
             
-            // Apply special rendering technique for ultra-crisp feature maps
-            // First clear canvas with solid black
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, displaySize, displaySize);
-            
-            // Draw at integer scale factors for perfect pixel alignment
-            const scale = Math.floor(displaySize / width);
-            const scaledWidth = width * scale;
-            const scaledHeight = height * scale;
-            
-            // Center the scaled image
-            const offsetX = Math.floor((displaySize - scaledWidth) / 2);
-            const offsetY = Math.floor((displaySize - scaledHeight) / 2);
-            
-            // Draw the image with perfect pixel alignment
-            ctx.drawImage(tempCanvas, offsetX, offsetY, scaledWidth, scaledHeight);
-            
-            // Add a subtle border to each pixel for enhanced visibility
-            canvas.classList.add('crisp-render');
-            
-            // Create filter label with crisp text rendering
             const label = document.createElement('div');
             label.textContent = `Filter ${c + 1}`;
             label.className = 'feature-map-label';
@@ -954,47 +909,20 @@ function showStatus(message, loading = false) {
     const visualizationContent = document.getElementById('visualization-content');
     if (!visualizationContent) return;
     
-    console.log('Status:', message);
-    
     if (loading) {
         visualizationContent.innerHTML = `
-            <div class="loading" style="
-                text-align: center;
-                padding: 40px;
-                color: #64B5F6;
-            ">
-                <div class="spinner" style="
-                    border: 3px solid rgba(100, 181, 246, 0.3);
-                    border-top: 3px solid #64B5F6;
-                    border-radius: 50%;
-                    width: 40px;
-                    height: 40px;
-                    animation: spin 1s linear infinite;
-                    margin: 0 auto 15px;
-                "></div>
-                <p style="font-size: 1.1rem; font-weight: 500;">${message}</p>
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>${message}</p>
             </div>
         `;
     } else {
-        // Only show non-loading messages if we're not in the middle of visualization
-        const hasVisualization = visualizationContent.innerHTML.includes('feature-maps-container') || 
-                                 visualizationContent.innerHTML.includes('dense-layer-container');
-        
-        if (!hasVisualization) {
+        // If we're not in the middle of visualization, show the message briefly
+        if (!visualizationContent.innerHTML.includes('feature-maps-container') && 
+            !visualizationContent.innerHTML.includes('dense-layer-container')) {
             visualizationContent.innerHTML = `
-                <div class="status" style="
-                    text-align: center;
-                    padding: 40px;
-                    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
-                    border-radius: 15px;
-                    border: 1px solid rgba(33, 150, 243, 0.3);
-                ">
-                    <h3 style="color: #64B5F6; margin-bottom: 10px; font-size: 1.4rem;">${message}</h3>
-                    <p style="color: rgba(255,255,255,0.8); font-size: 1rem;">
-                        ${message.includes('successfully') ? '✅ Operation completed!' : 
-                          message.includes('Error') ? '❌ Something went wrong.' : 
-                          '🔄 Ready for next step.'}
-                    </p>
+                <div class="status">
+                    <h3>${message}</h3>
                 </div>
             `;
         }
