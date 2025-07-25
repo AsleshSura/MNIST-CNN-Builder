@@ -52,6 +52,6 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
             </div>
         </div>
     );
-};
+}
 
 export default TrainAndVisualize;
