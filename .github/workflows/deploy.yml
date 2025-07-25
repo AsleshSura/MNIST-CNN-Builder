@@ -44,11 +44,12 @@ jobs:
         
     - name: Create deployment directory
       run: |
+        mkdir -p docs/cnn-builder
         mkdir -p docs/feature-map-visualizer
         
-    - name: Copy CNN Builder build to docs
+    - name: Copy CNN Builder build to docs/cnn-builder
       run: |
-        cp -r cnn-builder/build/* docs/
+        cp -r cnn-builder/build/* docs/cnn-builder/
         
     - name: Copy Feature Map Visualizer to docs
       run: |
