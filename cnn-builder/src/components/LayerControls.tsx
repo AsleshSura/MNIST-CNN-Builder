@@ -97,7 +97,7 @@ const LayerControls: React.FC<LayerControlsProps> = ({
     };
 
     const isLayerRecommended = (layerType: LayerType): boolean => {
-        return recommendedLayers.includes(layerType);
+        return recommendedLayers?.includes(layerType) || false;
     };
 
     const renderParams = () => {
@@ -229,7 +229,7 @@ const LayerControls: React.FC<LayerControlsProps> = ({
             <h3>{mode === 'edit' ? 'Edit Layer' : 'Add Layer'}</h3>
             
             {/* Validation Messages */}
-            {validation.errors.length > 0 && (
+            {validation?.errors?.length > 0 && (
                 <div style={{ color: 'red', marginBottom: '1rem' }}>
                     <strong>Errors:</strong>
                     <ul>
@@ -240,11 +240,11 @@ const LayerControls: React.FC<LayerControlsProps> = ({
                 </div>
             )}
             
-            {validation.warnings.length > 0 && (
+            {validation?.warnings?.length > 0 && (
                 <div style={{ color: 'orange', marginBottom: '1rem' }}>
                     <strong>Warnings:</strong>
                     <ul>
-                        {validation.warnings.map((warning, idx) => (
+                        {validation?.warnings?.map((warning, idx) => (
                             <li key={idx}>{warning}</li>
                         ))}
                     </ul>
@@ -252,9 +252,9 @@ const LayerControls: React.FC<LayerControlsProps> = ({
             )}
 
             {/* Recommendations - only show in add mode */}
-            {mode === 'add' && recommendedLayers.length > 0 && (
+            {mode === 'add' && recommendedLayers?.length > 0 && (
                 <div style={{ color: 'lightblue', marginBottom: '1rem' }}>
-                    <strong>Recommended next layers:</strong> {recommendedLayers.join(', ')}
+                    <strong>Recommended next layers:</strong> {recommendedLayers?.join(', ')}
                 </div>
             )}
 
@@ -280,7 +280,7 @@ const LayerControls: React.FC<LayerControlsProps> = ({
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                 <button 
                     onClick={handleUpdate} 
-                    disabled={validation.errors.length > 0}
+                    disabled={validation?.errors?.length > 0}
                 >
                     {mode === 'edit' ? 'Update Layer' : 'Add Layer'}
                 </button>
