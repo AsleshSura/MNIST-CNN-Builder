@@ -2,6 +2,7 @@ import React, { useState} from 'react';
 import { CNNLayer, TrainingSettings, ModelConfig } from '../types/layers';
 import LayerList from './LayerList';
 import LayerControls from './LayerControls';
+import LayerVisualization from './LayerVisualization';
 import TrainingSettingsForm from './TrainingSettingsForm';
 import TrainAndVisualize from './TrainAndVisualize';
 import ImportExportControls from './ImportExportControls';
@@ -16,13 +17,27 @@ const defaultTrainingSettings: TrainingSettings = {
 const ModelBuilder: React.FC = () => {
     const [layers, setLayers] = useState<CNNLayer[]>([]);
     const [trainingSettings, setTrainingSettings] = useState<TrainingSettings>(defaultTrainingSettings);
+    const [editingLayerIndex, setEditingLayerIndex] = useState<number | null>(null);
 
     const handleAddLayer = (layer:CNNLayer) => {
         setLayers([ ...layers, layer]);
     };
 
     const handleEditLayer = (index: number) => {
-        alert('Edit layer not implemented yet. Remove and re-add to change parameters.');
+        setEditingLayerIndex(index);
+    };
+
+    const handleUpdateLayer = (updatedLayer: CNNLayer) => {
+        if (editingLayerIndex !== null) {
+            const updatedLayers = [...layers];
+            updatedLayers[editingLayerIndex] = updatedLayer;
+            setLayers(updatedLayers);
+            setEditingLayerIndex(null);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingLayerIndex(null);
     };
 
     const handleRemoveLayer = (index: number) => {
@@ -38,10 +53,32 @@ const ModelBuilder: React.FC = () => {
         <div className="app-container">
             <h2>CNN Model Builder</h2>
             <section>
-                <LayerList layers={layers} onEdit={handleEditLayer} onRemove={handleRemoveLayer} />
+                <LayerList 
+                    layers={layers} 
+                    onEdit={handleEditLayer} 
+                    onRemove={handleRemoveLayer} 
+                    editingIndex={editingLayerIndex}
+                />
             </section>
             <section>
-                <LayerControls onAdd={handleAddLayer} />
+                <LayerVisualization layers={layers} />
+            </section>
+            <section>
+                {editingLayerIndex !== null ? (
+                    <LayerControls 
+                        onUpdate={handleUpdateLayer} 
+                        onCancel={handleCancelEdit}
+                        currentLayers={layers} 
+                        editingLayer={layers[editingLayerIndex]}
+                        mode="edit"
+                    />
+                ) : (
+                    <LayerControls 
+                        onAdd={handleAddLayer} 
+                        currentLayers={layers} 
+                        mode="add"
+                    />
+                )}
             </section>
             <section>
                 <TrainingSettingsForm settings={trainingSettings} onChange={setTrainingSettings} />
