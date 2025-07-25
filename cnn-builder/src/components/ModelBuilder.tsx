@@ -35,13 +35,23 @@ const ModelBuilder: React.FC = () => {
     };
 
     return (
-        <div style={{ maxWidth:700, margin:'2rem auto', background: '#222', color:'#fff', padding:'2rem', borderRadius: 12}}>
-            <h2 style={{ textAlign:'center'}}>CNN Model Builder</h2>
-            <LayerList layers={layers} onEdit={handleEditLayer} onRemove={handleRemoveLayer} />
-            <LayerControls onAdd={handleAddLayer} />
-            <TrainingSettingsForm settings={trainingSettings} onChange={setTrainingSettings} />
-            <TrainAndVisualize layers={layers} trainingSettings={trainingSettings} />
-            <ImportExportControls modelConfig={{ layers, trainingSettings, metadata: {label:'', timestamp: new Date().toISOString()}}} onImport={handleImport} />
+        <div className="app-container">
+            <h2>CNN Model Builder</h2>
+            <section>
+                <LayerList layers={layers} onEdit={handleEditLayer} onRemove={handleRemoveLayer} />
+            </section>
+            <section>
+                <LayerControls onAdd={handleAddLayer} />
+            </section>
+            <section>
+                <TrainingSettingsForm settings={trainingSettings} onChange={setTrainingSettings} />
+            </section>
+            <section>
+                <TrainAndVisualize layers={layers} trainingSettings={trainingSettings} />
+            </section>
+            <section>
+                <ImportExportControls modelConfig={{layers, trainingSettings, metadata: { label:'', timestamp: new Date().toISOString()}}} onImport={handleImport} />
+            </section>
         </div>
     );
 };

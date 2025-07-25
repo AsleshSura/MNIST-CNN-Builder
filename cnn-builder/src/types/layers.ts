@@ -23,7 +23,6 @@ export interface ReLULayer {
 export interface MaxPooling2DLayer {
     type: 'MaxPooling2D';
     poolSize: number;
-    kernelSize: number;
     strides: number;
     padding: 'valid' | 'same';
 }

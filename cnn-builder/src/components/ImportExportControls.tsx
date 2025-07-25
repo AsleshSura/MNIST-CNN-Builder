@@ -1,6 +1,5 @@
 import React from 'react';
 import { ModelConfig } from '../types/layers';
-import { read } from 'fs';
 
 interface ImportExportControlsProps {
     modelConfig: ModelConfig;
