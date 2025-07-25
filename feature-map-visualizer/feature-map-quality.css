@@ -1,0 +1,83 @@
+/* Feature Map Quality Enhancement */
+
+/* Improve image rendering quality */
+img, canvas, .feature-map-item img {
+    image-rendering: -webkit-optimize-contrast;  /* Chrome */
+    image-rendering: crisp-edges;                /* Firefox */
+    image-rendering: pixelated;                  /* Modern browsers */
+    -ms-interpolation-mode: nearest-neighbor;    /* IE */
+    transform: translateZ(0);                    /* Force GPU acceleration */
+}
+
+/* Ensure all feature maps display with crisp pixels */
+.feature-maps-grid {
+    image-rendering: pixelated !important;
+}
+
+.feature-maps-grid canvas {
+    image-rendering: pixelated !important;
+    image-rendering: -moz-crisp-edges !important;
+    image-rendering: crisp-edges !important;
+}
+
+/* Feature map container enhancements */
+.feature-maps-container {
+    image-rendering: pixelated;
+}
+
+.feature-map-item {
+    position: relative;
+    margin: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    background: white;
+    transition: transform 0.2s ease;
+}
+
+.feature-map-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: transparent;
+    display: block;
+}
+
+/* Fix for scaling issues */
+.visualization-section img,
+.visualization-section canvas {
+    width: auto !important;
+    height: auto !important;
+    max-width: 100%;
+}
+
+/* Improve filter display */
+.filter-display {
+    image-rendering: pixelated;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Specific for kernel visualization */
+.kernel-visualization img,
+.kernel-visualization canvas {
+    image-rendering: pixelated;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Fix for SVG renderings if they're used */
+svg[width="28"][height="28"],
+svg.feature-map-svg {
+    shape-rendering: crispEdges;
+}
+
+/* Improve canvas rendering */
+canvas.feature-map-canvas {
+    image-rendering: pixelated;
+}
+
+/* Fix for canvas resizing issues */
+canvas {
+    margin: 0 !important;
+    padding: 0 !important;
+}

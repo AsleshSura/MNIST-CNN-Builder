@@ -399,8 +399,11 @@ function displayInputImage() {
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.putImageData(imageData, 0, 0);
         
-        // Scale up for display
+        // Scale up for display with pixel-perfect rendering
         ctx.imageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
         ctx.drawImage(tempCanvas, 0, 0, 112, 112);
     });
     
@@ -428,12 +431,11 @@ async function displayFeatureMaps(featureMaps, layer) {
     const layerInfo = document.createElement('div');
     layerInfo.className = 'layer-info';
     layerInfo.style.cssText = `
-        background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(76, 175, 80, 0.15) 100%);
+        background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(76, 175, 80, 0.2) 100%);
         padding: 30px;
         border-radius: 15px;
         margin-bottom: 30px;
         border: 1px solid rgba(33, 150, 243, 0.3);
-        backdrop-filter: blur(10px);
         box-shadow: 0 8px 25px rgba(33, 150, 243, 0.15);
     `;
     layerInfo.innerHTML = `
@@ -507,8 +509,11 @@ async function displayFeatureMaps(featureMaps, layer) {
             
             tempCtx.putImageData(imageData, 0, 0);
             
-            // Scale up for display
+            // Scale up for display with pixel-perfect rendering
             ctx.imageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
             ctx.drawImage(tempCanvas, 0, 0, displaySize, displaySize);
             
             const label = document.createElement('div');
@@ -536,38 +541,83 @@ async function displayFeatureMaps(featureMaps, layer) {
         const [batch, units] = shape;
         
         const container = document.createElement('div');
-        container.className = 'feature-maps-container';
+        container.className = 'dense-layer-container';
         
         const title = document.createElement('h3');
         title.textContent = `Dense Layer Activations (${units} units)`;
         container.appendChild(title);
         
-        const grid = document.createElement('div');
-        grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(20px, 1fr)); gap: 2px; margin-top: 20px; max-height: 200px;';
-        
+        // Range indicator
+        const rangeIndicator = document.createElement('div');
+        rangeIndicator.className = 'range-indicator';
         const min = Math.min(...data);
         const max = Math.max(...data);
         const range = max - min;
+        rangeIndicator.textContent = `Activation Range: ${min.toFixed(3)} to ${max.toFixed(3)}`;
+        container.appendChild(rangeIndicator);
         
-        for (let i = 0; i < Math.min(units, 500); i++) { // Limit for performance
-            const normalized = range > 0 ? (data[i] - min) / range : 0;
-            const height = Math.max(normalized * 180, 2);
-            const color = `hsl(${normalized * 120}, 70%, 50%)`; // Green to red gradient
+        // Create a container with relative positioning for bars
+        const barsContainer = document.createElement('div');
+        barsContainer.className = 'dense-bars-container';
+        
+        // Add guide lines
+        const guides = [0.25, 0.5, 0.75, 1.0];
+        guides.forEach(level => {
+            const guideLine = document.createElement('div');
+            guideLine.className = 'guide-line';
+            guideLine.style.bottom = `${level * 100}%`;
             
+            const guideLabel = document.createElement('div');
+            guideLabel.className = 'guide-label';
+            guideLabel.textContent = level.toFixed(2);
+            guideLabel.style.bottom = `${level * 100}%`;
+            
+            barsContainer.appendChild(guideLine);
+            barsContainer.appendChild(guideLabel);
+        });
+        
+        // Add zero baseline
+        const zeroLine = document.createElement('div');
+        zeroLine.className = 'zero-baseline';
+        barsContainer.appendChild(zeroLine);
+        
+        // Determine how many units to show based on container width
+        const maxUnitsToShow = Math.min(units, 100); // Limit for performance and clarity
+        
+        // Create bars with labels
+        for (let i = 0; i < maxUnitsToShow; i++) {
+            const value = data[i];
+            const normalized = range > 0 ? (value - min) / range : 0;
+            const height = Math.max(normalized * 180, 2); // Minimum height for visibility
+            
+            // Bar container
+            const barContainer = document.createElement('div');
+            barContainer.className = 'dense-activation-bar';
+            
+            // The actual bar
             const bar = document.createElement('div');
-            bar.style.cssText = `
-                width: 100%; 
-                height: ${height}px; 
-                background: ${color}; 
-                align-self: end;
-                border-radius: 2px;
-            `;
-            bar.title = `Unit ${i + 1}: ${data[i].toFixed(3)}`;
-            grid.appendChild(bar);
+            bar.className = 'dense-bar';
+            bar.style.height = `${height}px`;
+            
+            // Value tooltip that appears on hover
+            const valueTooltip = document.createElement('div');
+            valueTooltip.className = 'activation-value';
+            valueTooltip.textContent = value.toFixed(3);
+            
+            // Neuron number label
+            const neuronLabel = document.createElement('div');
+            neuronLabel.className = 'neuron-number';
+            neuronLabel.textContent = i + 1; // 1-indexed for user clarity
+            
+            barContainer.appendChild(bar);
+            barContainer.appendChild(neuronLabel);
+            barContainer.appendChild(valueTooltip);
+            barsContainer.appendChild(barContainer);
         }
         
-        container.appendChild(grid);
+        container.appendChild(barsContainer);
         
+        // Information note
         const note = document.createElement('p');
         note.textContent = 'Each bar represents one neuron\'s activation level';
         note.style.cssText = 'text-align: center; margin-top: 10px; font-size: 0.9rem;';
