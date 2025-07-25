@@ -62,7 +62,7 @@ export type CNNLayer =
 
 export interface ModelConfig {
     layers: CNNLayer[];
-    trainingSetting: TrainingSettings;
+    trainingSettings: TrainingSettings;
     metadata: ModelMetadata;
 }
 

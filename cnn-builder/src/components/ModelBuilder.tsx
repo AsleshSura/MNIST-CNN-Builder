@@ -1,10 +1,10 @@
 import React, { useState} from 'react';
 import { CNNLayer, TrainingSettings, ModelConfig } from '../types/layers';
 import LayerList from './LayerList';
-import LayerControls from './LayerControl';
+import LayerControls from './LayerControls';
 import TrainingSettingsForm from './TrainingSettingsForm';
 import TrainAndVisualize from './TrainAndVisualize';
-import InportExportControls from './ImportExportControls';
+import ImportExportControls from './ImportExportControls';
 
 const defaultTrainingSettings: TrainingSettings = {
     epochs: 5,
@@ -35,13 +35,13 @@ const ModelBuilder: React.FC = () => {
     };
 
     return (
-        <div style={{ maxWidth:700, margin:'2rem auto', background: '#222', color:'#fff', padding='2rem', borderRadius: 12}}>
+        <div style={{ maxWidth:700, margin:'2rem auto', background: '#222', color:'#fff', padding:'2rem', borderRadius: 12}}>
             <h2 style={{ textAlign:'center'}}>CNN Model Builder</h2>
             <LayerList layers={layers} onEdit={handleEditLayer} onRemove={handleRemoveLayer} />
             <LayerControls onAdd={handleAddLayer} />
             <TrainingSettingsForm settings={trainingSettings} onChange={setTrainingSettings} />
             <TrainAndVisualize layers={layers} trainingSettings={trainingSettings} />
-            <InportExportControls modelConfig={{ layers, trainingSettings, metadata: {label:'', timestamp: new Date().toISOString()}}} onImport={handleImport} />
+            <ImportExportControls modelConfig={{ layers, trainingSettings, metadata: {label:'', timestamp: new Date().toISOString()}}} onImport={handleImport} />
         </div>
     );
 };

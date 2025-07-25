@@ -12,7 +12,7 @@ const LayerList: React.FC<LayerListProps> = ({ layers, onEdit, onRemove}) => {
         <div>
             <h3>Model Layers</h3>
             <ul>
-                {layers.map(layer, idx) => (
+                {layers.map((layer, idx) => (
                     <li key={idx}>
                         <span>{layer.type}</span>
                         <button onClick={() => onEdit(idx)}>Edit</button>

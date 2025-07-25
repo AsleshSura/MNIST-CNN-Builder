@@ -1,5 +1,5 @@
 import React from "react";
-import { CNNLayer } from "../types/layers";
+import { CNNLayer, TrainingSettings } from "../types/layers";
 
 interface TrainAndVisualizeProps {
     layers: CNNLayer[];

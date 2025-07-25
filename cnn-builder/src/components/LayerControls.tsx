@@ -18,7 +18,7 @@ const defaultParams: Record<LayerType, Partial<CNNLayer>> = {
 
 const LayerControls: React.FC<LayerControlsProps> = ({ onAdd }) => {
     const [layerType, setLayerType] = useState<LayerType>('Conv2D');
-    const [params, setParams] = useState<Partial<CNNLayers>>(defaultParams['Conv2D']);
+    const [params, setParams] = useState<Partial<CNNLayer>>(defaultParams['Conv2D']);
 
     const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const type = e.target.value as LayerType;
@@ -28,7 +28,7 @@ const LayerControls: React.FC<LayerControlsProps> = ({ onAdd }) => {
 
     const handleParamChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setParams((prev) => ({ ...prev, [name]: isNaN(Number(value)) ? value: Number(value)}));
+        setParams((prev: Partial<CNNLayer>) => ({ ...prev, [name]: isNaN(Number(value)) ? value : Number(value) }));
     };
 
     const handleAdd = () => {
@@ -43,8 +43,12 @@ const LayerControls: React.FC<LayerControlsProps> = ({ onAdd }) => {
                 return (
                     <>
                         <label>Filters: <input name="filters" type="number" value={(params as any).filters} onChange={handleParamChange}/></label>
-                        <label>Kernel Size: <input name="kernelSize" type="number" value={(params as any).kernelSize} onChange = {handleParamChange}/></label>
-                        <label>Strides: <input name="strides" type="number" value={(params as any).strides} onchange={handleParamChange}/></label>
+                        <label>Kernel Size: <input name="kernelSize" type="number" value={(params as any).kernelSize} onChange={handleParamChange}/></label>
+                        <label>Strides: <input name="strides" type="number" value={(params as any).strides} onChange={handleParamChange}/></label>
+                        <label>Padding: <select name="padding" value={(params as any).padding} onChange={handleParamChange}>
+                            <option value="same">same</option>
+                            <option value="valid">valid</option>
+                        </select></label>
                     </>
                 );
             case 'MaxPooling2D':
@@ -52,7 +56,10 @@ const LayerControls: React.FC<LayerControlsProps> = ({ onAdd }) => {
                     <>
                         <label>Pool Size: <input name="poolSize" type="number" value={(params as any).poolSize} onChange={handleParamChange} /></label>
                         <label>Strides: <input name='strides' type="number" value={(params as any).strides} onChange={handleParamChange} /></label>
-                        <label>Padding: <select name="padding" value={(params as any).padding} onChange={handleParamChange} /></label>
+                        <label>Padding: <select name="padding" value={(params as any).padding} onChange={handleParamChange}>
+                            <option value="same">same</option>
+                            <option value="valid">valid</option>
+                        </select></label>
                     </>
                 );
             case 'Dropout':
