@@ -9,7 +9,7 @@ function App() {
         <h1>🧠 MNIST CNN Builder</h1>
         <nav className="app-nav">
           <a 
-            href="/feature-map-visualizer/index.html"
+            href={`${process.env.PUBLIC_URL || ''}/feature-map-visualizer/index.html`}
             target="_blank" 
             rel="noopener noreferrer"
             className="nav-link feature-map-link"
