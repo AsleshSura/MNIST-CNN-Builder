@@ -443,11 +443,42 @@ async function displayFeatureMaps(featureMaps, layer) {
         border: 1px solid rgba(33, 150, 243, 0.3);
         box-shadow: 0 8px 25px rgba(33, 150, 243, 0.15);
     `;
-    layerInfo.innerHTML = `
-        <h3 style="color: #64B5F6; font-size: 2rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);">${layer.name} (${layer.getClassName()})</h3>
-        <p style="font-size: 1.2rem; margin: 10px 0; color: rgba(255, 255, 255, 0.9);"><strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}</p>
-        <p style="font-size: 1.2rem; margin: 10px 0; color: rgba(255, 255, 255, 0.9);"><strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}</p>
+    
+    // Create elements manually for better text rendering control
+    const title = document.createElement('h3');
+    title.textContent = `${layer.name} (${layer.getClassName()})`;
+    title.style.cssText = `
+        color: #64B5F6; 
+        font-size: 2rem; 
+        margin-bottom: 15px; 
+        font-family: monospace, 'Courier New', Courier;
+        font-weight: bold;
+        letter-spacing: 0.5px;
     `;
+    
+    const outputShape = document.createElement('p');
+    outputShape.innerHTML = `<strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}`;
+    outputShape.style.cssText = `
+        font-size: 1.2rem; 
+        margin: 10px 0; 
+        color: rgba(255, 255, 255, 0.9);
+        font-family: monospace, 'Courier New', Courier;
+        letter-spacing: 0.5px;
+    `;
+    
+    const activationRange = document.createElement('p');
+    activationRange.innerHTML = `<strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}`;
+    activationRange.style.cssText = `
+        font-size: 1.2rem; 
+        margin: 10px 0; 
+        color: rgba(255, 255, 255, 0.9);
+        font-family: monospace, 'Courier New', Courier;
+        letter-spacing: 0.5px;
+    `;
+    
+    layerInfo.appendChild(title);
+    layerInfo.appendChild(outputShape);
+    layerInfo.appendChild(activationRange);
     visualizationContent.appendChild(layerInfo);
     
     if (shape.length === 4) {
@@ -521,6 +552,7 @@ async function displayFeatureMaps(featureMaps, layer) {
             ctx.msImageSmoothingEnabled = false;
             ctx.drawImage(tempCanvas, 0, 0, displaySize, displaySize);
             
+            // Create filter label with crisp text rendering
             const label = document.createElement('div');
             label.textContent = `Filter ${c + 1}`;
             label.className = 'feature-map-label';
@@ -611,7 +643,7 @@ async function displayFeatureMaps(featureMaps, layer) {
             
             // Neuron number label
             const neuronLabel = document.createElement('div');
-            neuronLabel.className = 'neuron-number';
+            neuronLabel.className = 'neuron-number neuron-value'; // Add neuron-value class for text styling
             neuronLabel.textContent = i + 1; // 1-indexed for user clarity
             
             barContainer.appendChild(bar);

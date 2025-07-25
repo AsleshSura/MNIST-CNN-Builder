@@ -2,7 +2,7 @@
 
 /* Debug styles to verify CSS is loading */
 body::after {
-    content: "Feature map quality CSS loaded";
+    content: "Feature map quality CSS loaded (v2)";
     position: fixed;
     bottom: 5px;
     right: 5px;
@@ -13,6 +13,14 @@ body::after {
     border-radius: 3px;
     z-index: 9999;
     pointer-events: none;
+}
+
+/* Anti-aliasing reset - prevent browsers from auto-smoothing text */
+* {
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
+    text-rendering: optimizeSpeed;
+    font-smooth: never;
 }
 
 /* Improve image rendering quality - maximum aggressive settings */
@@ -45,16 +53,41 @@ canvas,
 /* Feature map container enhancements */
 .feature-maps-container {
     image-rendering: pixelated;
+    font-family: monospace, 'Courier New', Courier;
+}
+
+/* Text rendering - make sure text is sharp */
+.feature-map-label,
+.layer-info h3,
+.layer-info p,
+.range-indicator,
+.layer-name, 
+.guide-label,
+.neuron-number,
+.activation-value,
+.feature-maps-container h3 {
+    font-family: monospace, 'Courier New', Courier;
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    font-smooth: never;
+    font-weight: bold;
+    letter-spacing: 0.5px;
 }
 
 .feature-map-item {
     position: relative;
     margin: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     border-radius: 10px;
     overflow: hidden;
-    background: white;
+    background: #1e2338;
     transition: transform 0.2s ease;
+    padding: 12px;
+    border: 2px solid rgba(100, 200, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .feature-map-item img {

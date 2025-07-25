@@ -634,12 +634,10 @@ async function displayFeatureMaps(featureMaps, layer) {
             
             // Neuron number label
             const neuronLabel = document.createElement('div');
-            neuronLabel.className = 'neuron-number';
+            neuronLabel.className = 'neuron-number neuron-value'; // Add neuron-value class for text styling
             neuronLabel.textContent = i + 1; // 1-indexed for user clarity
-            neuronLabel.style.fontSize = '8px';
             neuronLabel.style.position = 'absolute';
             neuronLabel.style.bottom = '-15px';
-            neuronLabel.style.color = 'white';
             
             // Add to DOM
             barContainer.appendChild(bar);
