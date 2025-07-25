@@ -15,6 +15,7 @@ class DummyMNISTDataLoader {
     private readonly NUM_TEST_ELEMENTS = 200;
 
     async loadData(): Promise<DummyMNISTData> {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         if (this.data) {
             return this.data;
         }
