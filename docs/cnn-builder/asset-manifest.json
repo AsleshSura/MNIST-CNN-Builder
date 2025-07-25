@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/MNIST-CNN-Builder/cnn-builder/static/css/main.392eaaff.css",
-    "main.js": "/MNIST-CNN-Builder/cnn-builder/static/js/main.79f4c2d2.js",
-    "static/js/453.a1fd2f30.chunk.js": "/MNIST-CNN-Builder/cnn-builder/static/js/453.a1fd2f30.chunk.js",
-    "index.html": "/MNIST-CNN-Builder/cnn-builder/index.html",
-    "main.392eaaff.css.map": "/MNIST-CNN-Builder/cnn-builder/static/css/main.392eaaff.css.map",
-    "main.79f4c2d2.js.map": "/MNIST-CNN-Builder/cnn-builder/static/js/main.79f4c2d2.js.map",
-    "453.a1fd2f30.chunk.js.map": "/MNIST-CNN-Builder/cnn-builder/static/js/453.a1fd2f30.chunk.js.map"
+    "main.css": "./static/css/main.392eaaff.css",
+    "main.js": "./static/js/main.c255c19f.js",
+    "static/js/453.a1fd2f30.chunk.js": "./static/js/453.a1fd2f30.chunk.js",
+    "index.html": "./index.html",
+    "main.392eaaff.css.map": "./static/css/main.392eaaff.css.map",
+    "main.c255c19f.js.map": "./static/js/main.c255c19f.js.map",
+    "453.a1fd2f30.chunk.js.map": "./static/js/453.a1fd2f30.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.392eaaff.css",
-    "static/js/main.79f4c2d2.js"
+    "static/js/main.c255c19f.js"
   ]
 }
