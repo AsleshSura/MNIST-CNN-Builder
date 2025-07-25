@@ -2,7 +2,6 @@
   "name": "cnn-builder",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://asleshsura.github.io/MNIST-CNN-Builder",
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-vis": "^1.5.1",
