@@ -1,0 +1,52 @@
+/* Enhanced Layer Visualization Fixes */
+
+/* Fix for Dense layer visualization bars */
+.layer-visualization .layer-shape.layer-1d {
+    fill: none !important;
+    background: linear-gradient(135deg, #9775fa, #b197fc) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    opacity: 1 !important;
+    color: white !important;
+}
+
+/* Ensure all layer shapes have proper borders and shadows */
+.layer-visualization .layer-shape {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure visualization elements have proper colors */
+.layer-flow .layer-1d {
+    background: linear-gradient(135deg, #9775fa, #b197fc) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* SVG elements in layer visualization */
+svg rect.dense-bar {
+    fill: #9775fa !important;
+    stroke: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* General bar graph styles for any visualization */
+.bar-chart rect {
+    fill: #9775fa !important;
+    stroke: white !important;
+    stroke-width: 1px !important;
+    opacity: 1 !important;
+}
+
+/* Style for canvas-based charts */
+canvas.dense-layer-chart {
+    background-color: transparent !important;
+}
+
+/* Additional container styles */
+.layer-visual {
+    overflow: visible !important;
+}
+
+/* Ensure all text in layers is visible */
+.layer-dimensions, .layer-name, .layer-description {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
