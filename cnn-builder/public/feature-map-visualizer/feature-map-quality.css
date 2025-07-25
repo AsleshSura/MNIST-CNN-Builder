@@ -1,0 +1,145 @@
+/* Feature Map Quality Enhancement */
+
+/* Debug styles to verify CSS is loading */
+body::after {
+    content: "Feature map quality CSS loaded (v2)";
+    position: fixed;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0, 255, 0, 0.2);
+    color: lime;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* Anti-aliasing reset - prevent browsers from auto-smoothing text */
+* {
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
+    text-rendering: optimizeSpeed;
+    font-smooth: never;
+}
+
+/* Improve image rendering quality - MAXIMUM QUALITY SETTINGS */
+img, 
+canvas, 
+.feature-map-item img, 
+.feature-map-canvas,
+.feature-maps-grid canvas,
+#image-preview canvas {
+    image-rendering: -webkit-optimize-contrast !important;  /* Chrome */
+    image-rendering: crisp-edges !important;                /* Firefox */
+    image-rendering: pixelated !important;                  /* Modern browsers */
+    -ms-interpolation-mode: nearest-neighbor !important;    /* IE */
+    transform: translateZ(0) !important;          /* Force GPU acceleration */
+    backface-visibility: hidden !important;       /* Additional GPU hint */
+    object-fit: none !important;                 /* Prevent browser scaling */
+    filter: contrast(1.05) !important;           /* Slightly boost contrast */
+    image-orientation: none !important;          /* Prevent auto-orientation */
+    will-change: transform !important;           /* Hint for GPU acceleration */
+}
+
+/* Feature map ULTRA crisp mode */
+.feature-maps-grid {
+    image-rendering: pixelated !important;
+}
+
+.feature-maps-grid canvas {
+    image-rendering: pixelated !important;
+    image-rendering: -moz-crisp-edges !important;
+    image-rendering: crisp-edges !important;
+    filter: contrast(1.05) brightness(1.02) !important;  /* Enhance visibility */
+    border: none !important;
+    outline: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Feature map container enhancements */
+.feature-maps-container {
+    image-rendering: pixelated !important;
+    font-family: 'Courier Prime', monospace, 'Courier New', Courier !important;
+}
+
+/* Text rendering - make sure text is sharp */
+.feature-map-label,
+.layer-info h3,
+.layer-info p,
+.range-indicator,
+.layer-name, 
+.guide-label,
+.neuron-number,
+.activation-value,
+.feature-maps-container h3 {
+    font-family: 'Courier Prime', monospace, 'Courier New', Courier !important;
+    text-rendering: geometricPrecision !important;
+    -webkit-font-smoothing: none !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    font-smooth: never !important;
+    font-weight: bold !important;
+    letter-spacing: 0.5px !important;
+}
+
+.feature-map-item {
+    position: relative;
+    margin: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #1e2338;
+    transition: transform 0.2s ease;
+    padding: 12px;
+    border: 2px solid rgba(100, 200, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.feature-map-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: transparent;
+    display: block;
+}
+
+/* Fix for scaling issues */
+.visualization-section img,
+.visualization-section canvas {
+    width: auto !important;
+    height: auto !important;
+    max-width: 100%;
+}
+
+/* Improve filter display */
+.filter-display {
+    image-rendering: pixelated;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Specific for kernel visualization */
+.kernel-visualization img,
+.kernel-visualization canvas {
+    image-rendering: pixelated;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Fix for SVG renderings if they're used */
+svg[width="28"][height="28"],
+svg.feature-map-svg {
+    shape-rendering: crispEdges;
+}
+
+/* Improve canvas rendering */
+canvas.feature-map-canvas {
+    image-rendering: pixelated;
+}
+
+/* Fix for canvas resizing issues */
+canvas {
+    margin: 0 !important;
+    padding: 0 !important;
+}

@@ -59,6 +59,6 @@ describe('ModelBuilder Component', () => {
 
   test('component mounts without crashing', () => {
     const { container } = render(<ModelBuilder />);
-    expect(container.firstChild).toHaveClass('app-container');
+    expect(container.firstChild).toHaveClass('model-builder');
   });
 });

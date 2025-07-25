@@ -50,7 +50,7 @@ const ModelBuilder: React.FC = () => {
     };
 
     return (
-        <div className="app-container">
+        <div className="model-builder">
             <h2>CNN Model Builder</h2>
             <section>
                 <LayerList 

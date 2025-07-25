@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple TensorFlow.js Test</title>
+</head>
+<body>
+    <h1>TensorFlow.js Test</h1>
+    <div id="status">Loading...</div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script>
+        window.addEventListener('load', async function() {
+            const status = document.getElementById('status');
+            
+            try {
+                if (typeof tf === 'undefined') {
+                    status.innerHTML = '❌ TensorFlow.js not loaded';
+                    return;
+                }
+                
+                status.innerHTML = `✅ TensorFlow.js ${tf.version} loaded successfully<br>`;
+                status.innerHTML += `Backend: ${tf.getBackend()}<br>`;
+                
+                // Test tensor creation
+                const tensor = tf.tensor([1, 2, 3, 4]);
+                status.innerHTML += `✅ Tensor created: ${tensor.shape}<br>`;
+                tensor.dispose();
+                
+                // Test model creation
+                const model = tf.sequential({
+                    layers: [
+                        tf.layers.dense({units: 1, inputShape: [1]})
+                    ]
+                });
+                status.innerHTML += `✅ Model created with ${model.layers.length} layers<br>`;
+                model.dispose();
+                
+                status.innerHTML += `✅ All tests passed!`;
+                
+            } catch (error) {
+                status.innerHTML = `❌ Error: ${error.message}`;
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -9,7 +9,7 @@ function App() {
         <h1>🧠 MNIST CNN Builder</h1>
         <nav className="app-nav">
           <a 
-            href={process.env.NODE_ENV === 'production' ? '/MNIST-CNN-Builder/feature-map-visualizer/' : 'http://localhost:3002'} 
+            href="/MNIST-CNN-Builder/feature-map-visualizer/index.html"
             target="_blank" 
             rel="noopener noreferrer"
             className="nav-link feature-map-link"
