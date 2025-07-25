@@ -1,5 +1,7 @@
 # Quick Start Guide
 
+> 💡 **New to CNN layers?** Check out our comprehensive **[CNN Layer Guide](docs/layer-guide.html)** to understand what each layer does and how to use them effectively.
+
 ## 🎯 5-Minute Demo
 
 ### Step 1: Add Basic CNN Layers
