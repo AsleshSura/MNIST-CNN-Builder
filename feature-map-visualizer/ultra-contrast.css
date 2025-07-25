@@ -1,0 +1,69 @@
+﻿/* Ultra High Contrast Feature Map Visualization */
+/* Add this to improve visibility of feature maps */
+
+/* Improve contrast of feature maps */
+.feature-map-canvas {
+    filter: contrast(1.2) brightness(1.1) !important;
+    border: 2px solid rgba(0, 162, 255, 0.5) !important;
+}
+
+/* Enhanced canvas rendering */
+canvas {
+    image-rendering: pixelated !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+}
+
+/* Make sure the feature map container has good visibility */
+.feature-maps-grid {
+    background-color: #0a0a14 !important;
+    padding: 20px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid rgba(100, 200, 255, 0.3) !important;
+}
+
+/* Individual feature map items */
+.feature-map-item {
+    background: linear-gradient(135deg, #14182d, #0e1123) !important;
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(100, 200, 255, 0.2) !important;
+    padding: 12px !important;
+    border-radius: 10px !important;
+}
+
+/* Feature map labels with ultra-high contrast */
+.feature-map-label {
+    color: white !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    text-shadow: 
+        0 1px 0 #000,
+        1px 0 0 #000,
+        0 -1px 0 #000,
+        -1px 0 0 #000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 5px 10px !important;
+    font-weight: 700 !important;
+}
+
+/* Disable any hover effects that might interfere with rendering */
+.feature-map-item:hover,
+.feature-maps-grid:hover,
+.feature-map-canvas:hover {
+    transform: none !important;
+    filter: contrast(1.2) brightness(1.1) !important;
+}
+
+/* Ultra-crisp mode for all canvases */
+canvas.crisp-render {
+    image-rendering: pixelated !important;
+    image-rendering: crisp-edges !important;
+    filter: contrast(1.2) !important;
+}
+
+/* Debug indicator */
+body::after {
+    content: "Ultra contrast mode enabled" !important;
+    color: lime !important;
+}

@@ -23,7 +23,7 @@ body::after {
     font-smooth: never;
 }
 
-/* Improve image rendering quality - maximum aggressive settings */
+/* Improve image rendering quality - MAXIMUM QUALITY SETTINGS */
 img, 
 canvas, 
 .feature-map-item img, 
@@ -34,12 +34,15 @@ canvas,
     image-rendering: crisp-edges !important;                /* Firefox */
     image-rendering: pixelated !important;                  /* Modern browsers */
     -ms-interpolation-mode: nearest-neighbor !important;    /* IE */
-    transform: translateZ(0);                    /* Force GPU acceleration */
-    backface-visibility: hidden;                 /* Additional GPU hint */
+    transform: translateZ(0) !important;          /* Force GPU acceleration */
+    backface-visibility: hidden !important;       /* Additional GPU hint */
     object-fit: none !important;                 /* Prevent browser scaling */
+    filter: contrast(1.05) !important;           /* Slightly boost contrast */
+    image-orientation: none !important;          /* Prevent auto-orientation */
+    will-change: transform !important;           /* Hint for GPU acceleration */
 }
 
-/* Ensure all feature maps display with crisp pixels */
+/* Feature map ULTRA crisp mode */
 .feature-maps-grid {
     image-rendering: pixelated !important;
 }
@@ -48,12 +51,16 @@ canvas,
     image-rendering: pixelated !important;
     image-rendering: -moz-crisp-edges !important;
     image-rendering: crisp-edges !important;
+    filter: contrast(1.05) brightness(1.02) !important;  /* Enhance visibility */
+    border: none !important;
+    outline: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* Feature map container enhancements */
 .feature-maps-container {
-    image-rendering: pixelated;
-    font-family: monospace, 'Courier New', Courier;
+    image-rendering: pixelated !important;
+    font-family: 'Courier Prime', monospace, 'Courier New', Courier !important;
 }
 
 /* Text rendering - make sure text is sharp */
@@ -66,13 +73,13 @@ canvas,
 .neuron-number,
 .activation-value,
 .feature-maps-container h3 {
-    font-family: monospace, 'Courier New', Courier;
-    text-rendering: geometricPrecision;
-    -webkit-font-smoothing: none;
-    -moz-osx-font-smoothing: grayscale;
-    font-smooth: never;
-    font-weight: bold;
-    letter-spacing: 0.5px;
+    font-family: 'Courier Prime', monospace, 'Courier New', Courier !important;
+    text-rendering: geometricPrecision !important;
+    -webkit-font-smoothing: none !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    font-smooth: never !important;
+    font-weight: bold !important;
+    letter-spacing: 0.5px !important;
 }
 
 .feature-map-item {

@@ -501,10 +501,11 @@ async function displayFeatureMaps(featureMaps, layer) {
             item.className = 'feature-map-item';
             
             const canvas = document.createElement('canvas');
-            const displaySize = Math.max(height * 8, 150); // Large display size
+            const displaySize = Math.max(height * 10, 180); // Even larger display size for clarity
             canvas.width = displaySize;
             canvas.height = displaySize;
-            canvas.className = 'feature-map-canvas';
+            canvas.className = 'feature-map-canvas crisp-render';
+            canvas.style.imageRendering = 'pixelated';
             
             const ctx = canvas.getContext('2d');
             
@@ -528,7 +529,12 @@ async function displayFeatureMaps(featureMaps, layer) {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = width;
             tempCanvas.height = height;
+            tempCanvas.style.imageRendering = 'pixelated';
             const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.imageSmoothingEnabled = false;
+            tempCtx.mozImageSmoothingEnabled = false;
+            tempCtx.webkitImageSmoothingEnabled = false;
+            tempCtx.msImageSmoothingEnabled = false;
             
             const imageData = tempCtx.createImageData(width, height);
             const imgData = imageData.data;
@@ -545,12 +551,31 @@ async function displayFeatureMaps(featureMaps, layer) {
             
             tempCtx.putImageData(imageData, 0, 0);
             
-            // Scale up for display with pixel-perfect rendering
+            // Scale up for display with ULTRA pixel-perfect rendering
             ctx.imageSmoothingEnabled = false;
             ctx.mozImageSmoothingEnabled = false;
             ctx.webkitImageSmoothingEnabled = false;
             ctx.msImageSmoothingEnabled = false;
-            ctx.drawImage(tempCanvas, 0, 0, displaySize, displaySize);
+            
+            // Apply special rendering technique for ultra-crisp feature maps
+            // First clear canvas with solid black
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, displaySize, displaySize);
+            
+            // Draw at integer scale factors for perfect pixel alignment
+            const scale = Math.floor(displaySize / width);
+            const scaledWidth = width * scale;
+            const scaledHeight = height * scale;
+            
+            // Center the scaled image
+            const offsetX = Math.floor((displaySize - scaledWidth) / 2);
+            const offsetY = Math.floor((displaySize - scaledHeight) / 2);
+            
+            // Draw the image with perfect pixel alignment
+            ctx.drawImage(tempCanvas, offsetX, offsetY, scaledWidth, scaledHeight);
+            
+            // Add a subtle border to each pixel for enhanced visibility
+            canvas.classList.add('crisp-render');
             
             // Create filter label with crisp text rendering
             const label = document.createElement('div');
