@@ -198,15 +198,16 @@ async function loadDemoModel() {
         displayModelInfo();
         displayLayers();
         
-        // Enable image loading
-        const demoImageBtn = document.getElementById('demo-image-btn');
-        const imageFileInput = document.getElementById('image-file');
-        
-        if (demoImageBtn) {
-            demoImageBtn.disabled = false;
-        }
-        if (imageFileInput) {
-            imageFileInput.disabled = false;
+        // Enable image loading by adding a demo image button
+        const loadDemoBtn = document.getElementById('loadDemoBtn');
+        if (loadDemoBtn) {
+            // Add demo image button after model is loaded
+            const demoImageBtn = document.createElement('button');
+            demoImageBtn.className = 'btn';
+            demoImageBtn.textContent = '🖼️ Load Demo Image';
+            demoImageBtn.onclick = loadDemoImage;
+            demoImageBtn.style.marginLeft = '10px';
+            loadDemoBtn.parentNode.appendChild(demoImageBtn);
         }
         
         showStatus('Demo model loaded successfully! Now load an image.');
@@ -374,11 +375,11 @@ function displayModelInfo() {
 
 // Display layer list
 function displayLayers() {
-    const layerList = document.getElementById('layer-list');
+    const layerList = document.getElementById('layerList');
     if (!layerList) return;
     
     if (!layers || layers.length === 0) {
-        layerList.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">Load a model first</p>';
+        layerList.innerHTML = '<li class="empty-state"><div class="icon">🧠</div><p>Load a model first</p></li>';
         return;
     }
     
@@ -387,7 +388,7 @@ function displayLayers() {
     );
     
     if (visualizableLayers.length === 0) {
-        layerList.innerHTML = '<p style="text-align: center; padding: 20px; color: #ff6b6b;">No visualizable layers found</p>';
+        layerList.innerHTML = '<li class="empty-state"><p style="color: #ff6b6b;">No visualizable layers found</p></li>';
         return;
     }
     
@@ -396,27 +397,17 @@ function displayLayers() {
         const shapeText = Array.isArray(layer.shape) ? layer.shape.slice(1).join(' × ') : 'N/A';
         
         return `
-            <div class="layer-item ${isDisabled ? 'disabled' : ''}" 
+            <li class="layer-item ${isDisabled ? 'disabled' : ''}" 
                  onclick="${!isDisabled ? `selectLayer(${layer.index})` : ''}"
-                 id="layer-${layer.index}"
-                 style="
-                     padding: 15px;
-                     margin: 5px 0;
-                     background: ${isDisabled ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'};
-                     border-radius: 8px;
-                     border: 1px solid rgba(255,255,255,0.2);
-                     cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
-                     transition: all 0.2s ease;
-                     opacity: ${isDisabled ? '0.5' : '1'};
-                 ">
+                 id="layer-${layer.index}">
                 <div style="font-weight: 600; color: #2196F3; font-size: 1.1rem; margin-bottom: 5px;">
                     ${layer.name}
                 </div>
-                <div style="font-size: 0.9rem; opacity: 0.8; color: rgba(255,255,255,0.8);">
+                <div style="font-size: 0.9rem; opacity: 0.8;">
                     Type: ${layer.type} | Shape: ${shapeText}
                 </div>
                 ${isDisabled ? '<div style="font-size: 0.8rem; color: #ff6b6b; margin-top: 5px;">Load an image first</div>' : ''}
-            </div>
+            </li>
         `;
     }).join('');
     
@@ -553,7 +544,7 @@ async function displayInputImage() {
 
 // Display feature maps
 async function displayFeatureMaps(featureMaps, layer) {
-    const visualizationContent = document.getElementById('visualization-content');
+    const visualizationContent = document.getElementById('visualizationContent');
     if (!visualizationContent) return;
     
     // Get feature map data
@@ -906,25 +897,28 @@ async function displayFeatureMaps(featureMaps, layer) {
 
 // Show status message
 function showStatus(message, loading = false) {
-    const visualizationContent = document.getElementById('visualization-content');
-    if (!visualizationContent) return;
+    const status = document.getElementById('status');
+    if (!status) return;
+    
+    status.className = 'status show';
     
     if (loading) {
-        visualizationContent.innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>${message}</p>
-            </div>
-        `;
+        status.className += ' loading';
+        status.innerHTML = `<span class="loading-spinner"></span>${message}`;
+    } else if (message.includes('Error') || message.includes('❌')) {
+        status.className += ' error';
+        status.innerHTML = message;
+    } else if (message.includes('✅') || message.includes('success')) {
+        status.className += ' success';
+        status.innerHTML = message;
     } else {
-        // If we're not in the middle of visualization, show the message briefly
-        if (!visualizationContent.innerHTML.includes('feature-maps-container') && 
-            !visualizationContent.innerHTML.includes('dense-layer-container')) {
-            visualizationContent.innerHTML = `
-                <div class="status">
-                    <h3>${message}</h3>
-                </div>
-            `;
-        }
+        status.innerHTML = message;
+    }
+    
+    // Hide after 5 seconds if not loading
+    if (!loading) {
+        setTimeout(() => {
+            status.className = 'status';
+        }, 5000);
     }
 }
