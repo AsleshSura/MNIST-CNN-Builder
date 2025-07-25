@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/MNIST-CNN-Builder/static/css/main.ea0b0439.css",
+    "main.js": "/MNIST-CNN-Builder/static/js/main.5e9346f6.js",
+    "static/js/453.a1fd2f30.chunk.js": "/MNIST-CNN-Builder/static/js/453.a1fd2f30.chunk.js",
+    "index.html": "/MNIST-CNN-Builder/index.html",
+    "main.ea0b0439.css.map": "/MNIST-CNN-Builder/static/css/main.ea0b0439.css.map",
+    "main.5e9346f6.js.map": "/MNIST-CNN-Builder/static/js/main.5e9346f6.js.map",
+    "453.a1fd2f30.chunk.js.map": "/MNIST-CNN-Builder/static/js/453.a1fd2f30.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ea0b0439.css",
+    "static/js/main.5e9346f6.js"
+  ]
+}
