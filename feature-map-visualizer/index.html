@@ -3,7 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 CNN Feature Map Visualizer</title>
+    <title>🧠 CNN Feature Map Visual        .layer-item:hover {
+            background: rgba(33, 150, 243, 0.15) !important;
+            border-color: rgba(33, 150, 243, 0.5) !important;
+            transform: translateX(5px);
+        }
+
+        .layer-item.selected {
+            background: rgba(33, 150, 243, 0.25) !important;
+            border-left: 4px solid #2196F3 !important;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .layer-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .layer-item.disabled:hover {
+            background: rgba(255,255,255,0.05) !important;
+            transform: none !important;
+        }
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <link href="feature-map-quality.css" rel="stylesheet">
     <link href="dense-activation-labels.css" rel="stylesheet">
@@ -377,6 +397,54 @@
                 font-size: 2rem;
             }
         }
+
+        /* Additional styles for improved functionality */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .image-preview {
+            margin: 20px 0;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
+            border-radius: 15px;
+            border: 1px solid rgba(33, 150, 243, 0.2);
+        }
+
+        .image-preview img,
+        .image-preview canvas {
+            max-width: 200px;
+            max-height: 200px;
+            border: 3px solid rgba(33, 150, 243, 0.5);
+            border-radius: 12px;
+            image-rendering: pixelated;
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.2);
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.05) 100%);
+        }
+
+        .image-preview img:hover,
+        .image-preview canvas:hover {
+            transform: scale(1.05);
+            border-color: rgba(33, 150, 243, 0.8);
+            box-shadow: 0 12px 30px rgba(33, 150, 243, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -445,7 +513,19 @@
         </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script>
+        // Ensure TensorFlow.js is loaded before initializing
+        window.addEventListener('load', function() {
+            if (typeof tf !== 'undefined') {
+                console.log('✅ TensorFlow.js loaded successfully, version:', tf.version);
+                console.log('🚀 Available backends:', tf.engine().registryFactory);
+            } else {
+                console.error('❌ TensorFlow.js failed to load');
+                alert('TensorFlow.js failed to load. Please check your internet connection and refresh the page.');
+            }
+        });
+    </script>
     <script src="app.js"></script>
 </body>
 </html>

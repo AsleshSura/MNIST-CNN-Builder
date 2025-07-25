@@ -8,6 +8,18 @@ let layers = [];
 document.addEventListener('DOMContentLoaded', function() {
     console.log('CNN Feature Map Visualizer loaded');
     
+    // Wait for TensorFlow.js to load
+    if (typeof tf === 'undefined') {
+        console.log('Waiting for TensorFlow.js to load...');
+        setTimeout(initializeApp, 1000);
+    } else {
+        initializeApp();
+    }
+});
+
+function initializeApp() {
+    console.log('TensorFlow.js version:', tf.version);
+    
     // Set up file input event listeners
     const modelFileInput = document.getElementById('model-file');
     const imageFileInput = document.getElementById('image-file');
@@ -19,7 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (imageFileInput) {
         imageFileInput.addEventListener('change', loadCustomImage);
     }
-});
+    
+    // Enable memory management
+    tf.engine().startScope();
+    
+    console.log('App initialized successfully!');
+}
 
 // Clean up resources before page unload
 window.addEventListener('beforeunload', function() {
@@ -445,8 +462,8 @@ async function displayFeatureMaps(featureMaps, layer) {
     `;
     layerInfo.innerHTML = `
         <h3 style="color: #64B5F6; font-size: 2rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);">${layer.name} (${layer.getClassName()})</h3>
-        <p style="font-size: 1.2rem; margin: 10px 0; color: rgba(255, 255, 255, 0.9);"><strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}</p>
-        <p style="font-size: 1.2rem; margin: 10px 0; color: rgba(255, 255, 255, 0.9);"><strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}</p>
+        <p style="font-size: 1.2rem; margin: 10px 0; color: rgb(0, 0, 0);"><strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}</p>
+        <p style="font-size: 1.2rem; margin: 10px 0; color: rgb(0, 0, 0);"><strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}</p>
     `;
     visualizationContent.appendChild(layerInfo);
     

@@ -8,6 +8,18 @@ let layers = [];
 document.addEventListener('DOMContentLoaded', function() {
     console.log('CNN Feature Map Visualizer loaded');
     
+    // Wait for TensorFlow.js to load
+    if (typeof tf === 'undefined') {
+        console.log('Waiting for TensorFlow.js to load...');
+        setTimeout(initializeApp, 1000);
+    } else {
+        initializeApp();
+    }
+});
+
+function initializeApp() {
+    console.log('TensorFlow.js version:', tf.version);
+    
     // Set up file input event listeners
     const modelFileInput = document.getElementById('model-file');
     const imageFileInput = document.getElementById('image-file');
@@ -19,25 +31,34 @@ document.addEventListener('DOMContentLoaded', function() {
     if (imageFileInput) {
         imageFileInput.addEventListener('change', loadCustomImage);
     }
-});
+    
+    // Enable memory management
+    tf.engine().startScope();
+    
+    console.log('App initialized successfully!');
+}
 
 // Clean up resources before page unload
 window.addEventListener('beforeunload', function() {
-    if (model && !model.isDisposedInternal) {
-        try {
-            model.dispose();
-        } catch (e) {
-            console.warn('Error disposing model:', e.message);
-        }
-    }
-    if (inputImage && !inputImage.isDisposed) {
-        try {
-            inputImage.dispose();
-        } catch (e) {
-            console.warn('Error disposing input image:', e.message);
-        }
-    }
+    cleanupResources();
 });
+
+function cleanupResources() {
+    try {
+        if (model && !model.isDisposedInternal) {
+            model.dispose();
+            console.log('Model disposed');
+        }
+        if (inputImage && !inputImage.isDisposed) {
+            inputImage.dispose();
+            console.log('Input image disposed');
+        }
+        // Clean up TensorFlow.js memory
+        tf.engine().endScope();
+    } catch (e) {
+        console.warn('Error during cleanup:', e.message);
+    }
+}
 
 // Create a demo CNN model
 async function createDemoModel() {
@@ -121,7 +142,7 @@ async function loadDemoModel() {
     try {
         showStatus('Creating demo CNN model...', true);
         
-        // Only dispose if model exists and hasn't been disposed already
+        // Clean up existing model
         if (model && !model.isDisposedInternal) {
             try {
                 model.dispose();
@@ -130,15 +151,31 @@ async function loadDemoModel() {
             }
         }
         
+        // Wait for TensorFlow.js to be ready
+        await tf.ready();
+        console.log('TensorFlow.js backend:', tf.getBackend());
+        
         model = await createDemoModel();
         
-        // Extract layer information
-        layers = model.layers.map((layer, index) => ({
-            name: layer.name,
-            index,
-            shape: layer.outputShape,
-            type: layer.getClassName()
-        }));
+        // Extract layer information with error handling
+        layers = model.layers.map((layer, index) => {
+            try {
+                return {
+                    name: layer.name,
+                    index,
+                    shape: layer.outputShape,
+                    type: layer.getClassName()
+                };
+            } catch (e) {
+                console.warn(`Error processing layer ${index}:`, e);
+                return {
+                    name: `layer_${index}`,
+                    index,
+                    shape: null,
+                    type: 'Unknown'
+                };
+            }
+        });
         
         displayModelInfo();
         displayLayers();
@@ -159,6 +196,16 @@ async function loadDemoModel() {
     } catch (error) {
         console.error('Error loading demo model:', error);
         showStatus('Error loading demo model: ' + error.message);
+        
+        // Clean up on error
+        if (model && !model.isDisposedInternal) {
+            try {
+                model.dispose();
+            } catch (e) {
+                console.warn('Error disposing model after failure:', e.message);
+            }
+        }
+        model = null;
     }
 }
 
@@ -198,7 +245,7 @@ async function loadDemoImage() {
     try {
         showStatus('Generating demo image...', true);
         
-        // Only dispose if inputImage exists and hasn't been disposed already
+        // Clean up existing image
         if (inputImage && !inputImage.isDisposed) {
             try {
                 inputImage.dispose();
@@ -210,7 +257,7 @@ async function loadDemoImage() {
         inputImage = generateDemoImage();
         
         // Display the image
-        displayInputImage();
+        await displayInputImage();
         
         // Update layer list to enable selection
         displayLayers();
@@ -220,6 +267,16 @@ async function loadDemoImage() {
     } catch (error) {
         console.error('Error loading demo image:', error);
         showStatus('Error loading demo image: ' + error.message);
+        
+        // Clean up on error
+        if (inputImage && !inputImage.isDisposed) {
+            try {
+                inputImage.dispose();
+            } catch (e) {
+                console.warn('Error disposing input image after failure:', e.message);
+            }
+        }
+        inputImage = null;
     }
 }
 
@@ -301,28 +358,62 @@ function displayLayers() {
     const layerList = document.getElementById('layer-list');
     if (!layerList) return;
     
+    if (!layers || layers.length === 0) {
+        layerList.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">Load a model first</p>';
+        return;
+    }
+    
     const visualizableLayers = layers.filter(layer => 
         layer.type === 'Conv2D' || layer.type === 'Dense'
     );
     
-    layerList.innerHTML = visualizableLayers.map(layer => `
-        <div class="layer-item ${!inputImage ? 'disabled' : ''}" 
-             onclick="${inputImage ? `selectLayer(${layer.index})` : ''}"
-             id="layer-${layer.index}">
-            <div style="font-weight: 600; color: #2196F3;">${layer.name}</div>
-            <div style="font-size: 0.9rem; opacity: 0.8;">
-                Type: ${layer.type} | Shape: ${Array.isArray(layer.shape) ? layer.shape.slice(1).join(' × ') : 'N/A'}
+    if (visualizableLayers.length === 0) {
+        layerList.innerHTML = '<p style="text-align: center; padding: 20px; color: #ff6b6b;">No visualizable layers found</p>';
+        return;
+    }
+    
+    layerList.innerHTML = visualizableLayers.map(layer => {
+        const isDisabled = !inputImage;
+        const shapeText = Array.isArray(layer.shape) ? layer.shape.slice(1).join(' × ') : 'N/A';
+        
+        return `
+            <div class="layer-item ${isDisabled ? 'disabled' : ''}" 
+                 onclick="${!isDisabled ? `selectLayer(${layer.index})` : ''}"
+                 id="layer-${layer.index}"
+                 style="
+                     padding: 15px;
+                     margin: 5px 0;
+                     background: ${isDisabled ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'};
+                     border-radius: 8px;
+                     border: 1px solid rgba(255,255,255,0.2);
+                     cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
+                     transition: all 0.2s ease;
+                     opacity: ${isDisabled ? '0.5' : '1'};
+                 ">
+                <div style="font-weight: 600; color: #2196F3; font-size: 1.1rem; margin-bottom: 5px;">
+                    ${layer.name}
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.8; color: rgba(255,255,255,0.8);">
+                    Type: ${layer.type} | Shape: ${shapeText}
+                </div>
+                ${isDisabled ? '<div style="font-size: 0.8rem; color: #ff6b6b; margin-top: 5px;">Load an image first</div>' : ''}
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+    
+    console.log(`Displayed ${visualizableLayers.length} visualizable layers`);
 }
 
 // Select a layer for visualization - GLOBAL function for onclick
 async function selectLayer(layerIndex) {
-    if (!model || !inputImage) return;
+    if (!model || !inputImage) {
+        showStatus('Please load both model and image first');
+        return;
+    }
     
     try {
         showStatus('Generating feature maps...', true);
+        console.log(`Generating feature maps for layer ${layerIndex}`);
         
         selectedLayer = layerIndex;
         
@@ -338,15 +429,25 @@ async function selectLayer(layerIndex) {
         // Use tf.tidy to manage memory automatically
         const featureMaps = tf.tidy(() => {
             let currentOutput = inputImage;
+            console.log('Starting forward pass...');
             
             // Pass through layers up to the selected layer
             for (let i = 0; i <= layerIndex; i++) {
                 const layer = model.layers[i];
-                currentOutput = layer.apply(currentOutput);
+                console.log(`Processing layer ${i}: ${layer.name} (${layer.getClassName()})`);
+                try {
+                    currentOutput = layer.apply(currentOutput);
+                    console.log(`Layer ${i} output shape:`, currentOutput.shape);
+                } catch (e) {
+                    console.error(`Error in layer ${i}:`, e);
+                    throw e;
+                }
             }
             
             return currentOutput;
         });
+        
+        console.log('Feature maps generated, shape:', featureMaps.shape);
         
         // Display feature maps
         const layer = model.layers[layerIndex];
@@ -357,34 +458,46 @@ async function selectLayer(layerIndex) {
             featureMaps.dispose();
         }
         
+        console.log('Layer visualization completed successfully');
+        
     } catch (error) {
         console.error('Error generating feature maps:', error);
         showStatus('Error generating feature maps: ' + error.message);
+        
+        // Clean up any tensors that might have been created
+        tf.engine().endScope();
+        tf.engine().startScope();
     }
 }
 
 // Display the input image
-function displayInputImage() {
+async function displayInputImage() {
     const preview = document.getElementById('image-preview');
-    if (!preview) return;
+    if (!preview || !inputImage) return;
     
-    // Create canvas to display the image
-    const canvas = document.createElement('canvas');
-    canvas.width = 196; // 28 * 7 for better visibility
-    canvas.height = 196;
-    canvas.style.border = '2px solid #2196F3';
-    canvas.style.borderRadius = '8px';
-    canvas.style.imageRendering = 'pixelated';
-    canvas.classList.add('pixel-crisp');
-    
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.msImageSmoothingEnabled = false;
-    
-    // Get image data from tensor
-    inputImage.data().then(data => {
+    try {
+        // Create canvas to display the image
+        const canvas = document.createElement('canvas');
+        canvas.width = 196; // 28 * 7 for better visibility
+        canvas.height = 196;
+        canvas.style.cssText = `
+            border: 2px solid #2196F3;
+            border-radius: 8px;
+            image-rendering: pixelated;
+            background: #000;
+            display: block;
+            margin: 10px auto;
+        `;
+        canvas.classList.add('pixel-crisp');
+        
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
+        
+        // Get image data from tensor
+        const data = await inputImage.data();
         const imageData = ctx.createImageData(28, 28);
         const imgData = imageData.data;
         
@@ -410,11 +523,17 @@ function displayInputImage() {
         
         // Scale up for display with pixel-perfect rendering
         ctx.drawImage(tempCanvas, 0, 0, 196, 196);
-    });
-    
-    // Clear previous content and add canvas
-    preview.innerHTML = '<h4>Input Image:</h4>';
-    preview.appendChild(canvas);
+        
+        // Clear previous content and add canvas
+        preview.innerHTML = '<h4 style="color: #64B5F6; margin-bottom: 10px;">Input Image (28×28):</h4>';
+        preview.appendChild(canvas);
+        
+        console.log('Input image displayed successfully');
+        
+    } catch (error) {
+        console.error('Error displaying input image:', error);
+        preview.innerHTML = '<p style="color: #ff6b6b;">Error displaying image</p>';
+    }
 }
 
 // Display feature maps
@@ -604,91 +723,211 @@ async function displayFeatureMaps(featureMaps, layer) {
         
         const container = document.createElement('div');
         container.className = 'dense-layer-container';
+        container.style.cssText = `
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        `;
         
         const title = document.createElement('h3');
         title.textContent = `Dense Layer Activations (${units} units)`;
+        title.style.cssText = `
+            color: #64B5F6;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        `;
         container.appendChild(title);
         
         // Range indicator
-        const rangeIndicator = document.createElement('div');
-        rangeIndicator.className = 'range-indicator';
         const min = Math.min(...data);
         const max = Math.max(...data);
         const range = max - min;
+        
+        const rangeIndicator = document.createElement('div');
+        rangeIndicator.style.cssText = `
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+        `;
         rangeIndicator.textContent = `Activation Range: ${min.toFixed(3)} to ${max.toFixed(3)}`;
         container.appendChild(rangeIndicator);
         
-        // Create a container with relative positioning for bars
+        // Create bars container
+        const barsWrapper = document.createElement('div');
+        barsWrapper.style.cssText = `
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            overflow-x: auto;
+            margin-bottom: 15px;
+        `;
+        
         const barsContainer = document.createElement('div');
-        barsContainer.className = 'dense-bars-container';
+        barsContainer.style.cssText = `
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            height: 200px;
+            min-width: ${Math.min(units * 12, 1200)}px;
+            position: relative;
+            gap: 1px;
+        `;
         
         // Add guide lines
-        const guides = [0.25, 0.5, 0.75, 1.0];
-        guides.forEach(level => {
+        for (let i = 1; i <= 4; i++) {
             const guideLine = document.createElement('div');
-            guideLine.className = 'guide-line';
-            guideLine.style.bottom = `${level * 100}%`;
+            const percent = (i * 25);
+            guideLine.style.cssText = `
+                position: absolute;
+                bottom: ${percent}%;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: rgba(255, 255, 255, 0.2);
+                pointer-events: none;
+            `;
             
-            const guideLabel = document.createElement('div');
-            guideLabel.className = 'guide-label';
-            guideLabel.textContent = level.toFixed(2);
-            guideLabel.style.bottom = `${level * 100}%`;
-            
+            const label = document.createElement('span');
+            label.style.cssText = `
+                position: absolute;
+                right: 5px;
+                top: -8px;
+                font-size: 10px;
+                color: rgba(255, 255, 255, 0.7);
+                background: rgba(0, 0, 0, 0.5);
+                padding: 2px 4px;
+                border-radius: 2px;
+            `;
+            label.textContent = (percent / 100).toFixed(2);
+            guideLine.appendChild(label);
             barsContainer.appendChild(guideLine);
-            barsContainer.appendChild(guideLabel);
-        });
-        
-        // Add zero baseline
-        const zeroLine = document.createElement('div');
-        zeroLine.className = 'zero-baseline';
-        barsContainer.appendChild(zeroLine);
-        
-        // Determine how many units to show based on container width
-        const maxUnitsToShow = Math.min(units, 100); // Limit for performance and clarity
-        
-        // Create bars with labels
-        for (let i = 0; i < maxUnitsToShow; i++) {
-            const value = data[i];
-            const normalized = range > 0 ? (value - min) / range : 0;
-            const height = Math.max(normalized * 180, 2); // Minimum height for visibility
-            
-            // Bar container
-            const barContainer = document.createElement('div');
-            barContainer.className = 'dense-activation-bar';
-            
-            // The actual bar
-            const bar = document.createElement('div');
-            bar.className = 'dense-bar';
-            bar.style.height = `${height}px`;
-            
-            // Value tooltip that appears on hover
-            const valueTooltip = document.createElement('div');
-            valueTooltip.className = 'activation-value';
-            valueTooltip.textContent = value.toFixed(3);
-            
-            // Neuron number label
-            const neuronLabel = document.createElement('div');
-            neuronLabel.className = 'neuron-number neuron-value'; // Add neuron-value class for text styling
-            neuronLabel.textContent = i + 1; // 1-indexed for user clarity
-            
-            barContainer.appendChild(bar);
-            barContainer.appendChild(neuronLabel);
-            barContainer.appendChild(valueTooltip);
-            barsContainer.appendChild(barContainer);
         }
         
-        container.appendChild(barsContainer);
+        // Determine how many units to show
+        const maxUnitsToShow = Math.min(units, 100);
+        
+        // Create bars
+        for (let i = 0; i < maxUnitsToShow; i++) {
+            const value = data[i];
+            const normalized = range > 0 ? Math.max(0, Math.min(1, (value - min) / range)) : 0;
+            const barHeight = Math.max(normalized * 180, 2);
+            
+            const barWrapper = document.createElement('div');
+            barWrapper.style.cssText = `
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+                width: 10px;
+                height: 100%;
+                margin-right: 1px;
+            `;
+            
+            const bar = document.createElement('div');
+            const hue = Math.floor((1 - normalized) * 240); // Blue to red scale
+            bar.style.cssText = `
+                width: 8px;
+                height: ${barHeight}px;
+                background: linear-gradient(to top, hsl(${hue}, 70%, 45%), hsl(${hue}, 70%, 65%));
+                border-radius: 2px 2px 0 0;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                transition: all 0.2s ease;
+                cursor: pointer;
+                box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+            `;
+            
+            // Tooltip
+            const tooltip = document.createElement('div');
+            tooltip.style.cssText = `
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 5px 8px;
+                border-radius: 4px;
+                font-size: 11px;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+                z-index: 1000;
+                margin-bottom: 5px;
+            `;
+            tooltip.textContent = `Unit ${i + 1}: ${value.toFixed(4)}`;
+            
+            // Label
+            const label = document.createElement('div');
+            label.style.cssText = `
+                position: absolute;
+                bottom: -20px;
+                font-size: 8px;
+                color: rgba(255, 255, 255, 0.8);
+                font-weight: bold;
+                text-align: center;
+                width: 20px;
+                left: 50%;
+                transform: translateX(-50%) rotate(-45deg);
+                transform-origin: center;
+            `;
+            label.textContent = i + 1;
+            
+            // Hover effects
+            barWrapper.addEventListener('mouseenter', () => {
+                tooltip.style.opacity = '1';
+                bar.style.transform = 'scaleX(1.5)';
+                bar.style.filter = 'brightness(1.2)';
+            });
+            
+            barWrapper.addEventListener('mouseleave', () => {
+                tooltip.style.opacity = '0';
+                bar.style.transform = 'scaleX(1)';
+                bar.style.filter = 'brightness(1)';
+            });
+            
+            barWrapper.appendChild(bar);
+            barWrapper.appendChild(tooltip);
+            barWrapper.appendChild(label);
+            barsContainer.appendChild(barWrapper);
+        }
+        
+        barsWrapper.appendChild(barsContainer);
+        container.appendChild(barsWrapper);
         
         // Information note
         const note = document.createElement('p');
-        note.textContent = 'Each bar represents one neuron\'s activation level';
-        note.style.cssText = 'text-align: center; margin-top: 10px; font-size: 0.9rem;';
+        note.style.cssText = `
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+        `;
+        note.textContent = `Showing ${maxUnitsToShow} of ${units} neurons. Hover over bars for details.`;
         container.appendChild(note);
         
-        if (units > 500) {
+        if (units > maxUnitsToShow) {
             const limitNote = document.createElement('p');
-            limitNote.textContent = `Showing first 500 of ${units} units`;
-            limitNote.style.cssText = 'text-align: center; margin-top: 15px; color: #FF9800;';
+            limitNote.style.cssText = `
+                text-align: center;
+                margin-top: 10px;
+                color: #FF9800;
+                font-size: 0.85rem;
+                font-weight: 600;
+            `;
+            limitNote.textContent = `Limited to first ${maxUnitsToShow} units for performance`;
             container.appendChild(limitNote);
         }
         
@@ -703,19 +942,47 @@ function showStatus(message, loading = false) {
     const visualizationContent = document.getElementById('visualization-content');
     if (!visualizationContent) return;
     
+    console.log('Status:', message);
+    
     if (loading) {
         visualizationContent.innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>${message}</p>
+            <div class="loading" style="
+                text-align: center;
+                padding: 40px;
+                color: #64B5F6;
+            ">
+                <div class="spinner" style="
+                    border: 3px solid rgba(100, 181, 246, 0.3);
+                    border-top: 3px solid #64B5F6;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 15px;
+                "></div>
+                <p style="font-size: 1.1rem; font-weight: 500;">${message}</p>
             </div>
         `;
     } else {
-        // If we're not in the middle of visualization, show the message briefly
-        if (!visualizationContent.innerHTML.includes('feature-maps-container')) {
+        // Only show non-loading messages if we're not in the middle of visualization
+        const hasVisualization = visualizationContent.innerHTML.includes('feature-maps-container') || 
+                                 visualizationContent.innerHTML.includes('dense-layer-container');
+        
+        if (!hasVisualization) {
             visualizationContent.innerHTML = `
-                <div class="status">
-                    <h3>${message}</h3>
+                <div class="status" style="
+                    text-align: center;
+                    padding: 40px;
+                    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
+                    border-radius: 15px;
+                    border: 1px solid rgba(33, 150, 243, 0.3);
+                ">
+                    <h3 style="color: #64B5F6; margin-bottom: 10px; font-size: 1.4rem;">${message}</h3>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 1rem;">
+                        ${message.includes('successfully') ? '✅ Operation completed!' : 
+                          message.includes('Error') ? '❌ Something went wrong.' : 
+                          '🔄 Ready for next step.'}
+                    </p>
                 </div>
             `;
         }
