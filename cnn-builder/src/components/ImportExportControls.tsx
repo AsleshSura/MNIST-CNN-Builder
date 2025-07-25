@@ -41,4 +41,4 @@ const ImportExportControls: React.FC<ImportExportControlsProps> = ({ modelConfig
     );
 };
 
-export default InportExportControls;
+export default ImportExportControls;
