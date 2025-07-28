@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧠 CNN Feature Map Visualizer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-    <link href="feature-map-quality.css" rel="stylesheet">
-    <link href="dense-activation-labels.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,9 +13,9 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1e3a 100%);
-            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
             min-height: 100vh;
             line-height: 1.6;
         }
@@ -25,159 +23,144 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 2rem;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 3rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
         .header h1 {
             font-size: 3rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
         }
 
         .header p {
             font-size: 1.2rem;
-            opacity: 0.9;
+            color: #718096;
+            margin-bottom: 2rem;
         }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 30px;
-            margin-bottom: 30px;
+        .controls {
+            margin-top: 2rem;
         }
 
-        .control-panel {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            height: fit-content;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .section h2 {
-            color: #4CAF50;
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-            border-bottom: 2px solid rgba(76, 175, 80, 0.3);
-            padding-bottom: 10px;
+        .control-group {
+            margin-bottom: 1.5rem;
         }
 
         .btn {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 12px 24px;
             border-radius: 8px;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
             transition: all 0.3s ease;
-            margin: 5px;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
         .btn:disabled {
-            background: #666;
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
-        .file-input {
-            margin: 10px 0;
-        }
-
-        .file-input input {
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 500;
             display: none;
         }
 
-        .file-input label {
-            display: inline-block;
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .status.show {
+            display: block;
         }
 
-        .file-input label:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
         }
 
-        .visualization-panel {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 25px;
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #00b894;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #e74c3c;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            background: white;
             border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
-        .status {
-            text-align: center;
-            padding: 40px;
-            color: rgba(255, 255, 255, 0.7);
+        .sidebar {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-right: 1px solid #e9ecef;
         }
 
-        .status h3 {
-            color: #FF9800;
-            margin-bottom: 15px;
-        }
-
-        .model-info {
-            background: rgba(76, 175, 80, 0.1);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+        .sidebar h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
         }
 
         .layer-list {
-            max-height: 300px;
+            list-style: none;
+            max-height: 400px;
             overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.02);
         }
 
         .layer-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
 
         .layer-item:hover {
-            background: rgba(33, 150, 243, 0.1);
+            background: rgba(33, 150, 243, 0.15);
+            border-color: rgba(33, 150, 243, 0.5);
+            transform: translateX(5px);
         }
 
         .layer-item.selected {
-            background: rgba(33, 150, 243, 0.2);
+            background: rgba(33, 150, 243, 0.25);
             border-left: 4px solid #2196F3;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
         }
 
         .layer-item.disabled {
@@ -185,131 +168,38 @@
             cursor: not-allowed;
         }
 
-        .feature-maps-container {
-            margin-top: 30px;
-            background: linear-gradient(135deg, rgba(33, 150, 243, 0.08) 0%, rgba(76, 175, 80, 0.08) 100%);
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid rgba(33, 150, 243, 0.2);
+        .layer-item.disabled:hover {
+            background: white;
+            transform: none;
         }
 
-        .feature-maps-container h3 {
-            color: #81C784;
-            font-size: 1.8rem;
-            margin-bottom: 25px;
+        .visualization {
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+
+        .empty-state {
             text-align: center;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(90deg, #81C784, #4CAF50);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
+            padding: 3rem;
+            color: #718096;
         }
 
-        .feature-maps-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 25px;
-            margin-top: 25px;
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
 
-        .feature-map-item {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .feature-map-item:hover {
-            transform: translateY(-8px) scale(1.03);
-            border-color: rgba(33, 150, 243, 0.5);
-            box-shadow: 0 15px 40px rgba(33, 150, 243, 0.25);
-            background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(76, 175, 80, 0.15) 100%);
-        }
-
-        .feature-map-item:hover .feature-map-canvas {
-            border-color: rgba(33, 150, 243, 0.7);
-            box-shadow: 0 6px 25px rgba(33, 150, 243, 0.3);
-            transform: scale(1.02);
-        }
-
-        .feature-map-canvas {
-            border-radius: 8px;
-            margin-bottom: 15px;
-            background: linear-gradient(45deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
-            border: 2px solid rgba(33, 150, 243, 0.3);
-            image-rendering: pixelated;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            position: relative;
-        }
-
-        .feature-map-canvas::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, rgba(33, 150, 243, 0.3), rgba(76, 175, 80, 0.3));
-            border-radius: 10px;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .feature-map-item:hover .feature-map-canvas::before {
-            opacity: 1;
-        }
-
-        .feature-map-label {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #E3F2FD;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-            margin-top: 10px;
-            background: linear-gradient(90deg, #E3F2FD, #BBDEFB);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Add some beautiful animations */
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 5px rgba(33, 150, 243, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.6); }
-        }
-
-        .feature-map-item.active {
-            animation: glow 2s infinite;
-        }
-
-        /* Add gradient text effects */
-        .visualization-content h3 {
-            background: linear-gradient(90deg, #64B5F6, #81C784);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid #FF9800;
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin-right: 0.5rem;
         }
 
         @keyframes spin {
@@ -317,130 +207,69 @@
             100% { transform: rotate(360deg); }
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .footer a {
-            color: #4CAF50;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        .image-preview {
-            margin: 20px 0;
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
-            border-radius: 15px;
-            border: 1px solid rgba(33, 150, 243, 0.2);
-        }
-
-        .image-preview img,
-        .image-preview canvas {
-            max-width: 200px;
-            max-height: 200px;
-            border: 3px solid rgba(33, 150, 243, 0.5);
-            border-radius: 12px;
-            image-rendering: pixelated;
-            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.2);
-            transition: all 0.3s ease;
-            background: linear-gradient(45deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.05) 100%);
-        }
-
-        .image-preview img:hover,
-        .image-preview canvas:hover {
-            transform: scale(1.05);
-            border-color: rgba(33, 150, 243, 0.8);
-            box-shadow: 0 12px 30px rgba(33, 150, 243, 0.3);
-        }
-
-        @media (max-width: 1024px) {
+        @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
             }
             
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
             .header h1 {
                 font-size: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
+        <div class="header">
             <h1>🧠 CNN Feature Map Visualizer</h1>
-            <p>Explore how Convolutional Neural Networks see and process images</p>
-            <div style="margin-top: 15px;">
-                <a href="../" style="display: inline-block; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; transition: all 0.3s ease;">
-                    🏗️ Back to CNN Builder
+            <p>Explore the inner workings of Convolutional Neural Networks</p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <a href="../docs/" style="display: inline-block; background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">
+                    ← Back to Main
                 </a>
             </div>
-        </header>
-
-        <div class="main-content">
-            <div class="control-panel">
-                <div class="section">
-                    <h2>1. Load a Model</h2>
-                    <button class="btn" onclick="loadDemoModel()">🚀 Load Demo CNN</button>
-                    <div class="file-input">
-                        <label for="model-file">📁 Load Custom Model</label>
-                        <input type="file" id="model-file" accept=".json" onchange="loadCustomModel(event)">
-                    </div>
-                    <div id="model-info" style="display: none;"></div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <button id="loadDemoBtn" class="btn" onclick="loadDemoModel()">🚀 Load Demo CNN Model</button>
+                    <button id="loadCustomBtn" class="btn" disabled>📁 Load Custom Model</button>
                 </div>
-
-                <div class="section">
-                    <h2>2. Upload an Image</h2>
-                    <button class="btn" onclick="loadDemoImage()" id="demo-image-btn" disabled>🖼️ Load Demo Image</button>
-                    <div class="file-input">
-                        <label for="image-file">📁 Upload Image</label>
-                        <input type="file" id="image-file" accept="image/*" onchange="loadCustomImage(event)" disabled>
-                    </div>
-                    <div id="image-preview" class="image-preview"></div>
-                </div>
-
-                <div class="section">
-                    <h2>3. Select a Layer</h2>
-                    <div id="layer-list" class="layer-list">
-                        <p style="text-align: center; padding: 20px; color: #666;">Load a model first</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="visualization-panel">
-                <h2>Feature Map Visualization</h2>
-                <div id="visualization-content">
-                    <div class="status">
-                        <h3>Welcome to the CNN Feature Map Visualizer!</h3>
-                        <p>This tool helps you understand how Convolutional Neural Networks process images by visualizing the feature maps at each layer.</p>
-                        <br>
-                        <h4>How to use:</h4>
-                        <ol style="text-align: left; max-width: 500px; margin: 0 auto;">
-                            <li>Load a demo CNN model or upload your own TensorFlow.js model</li>
-                            <li>Upload an image or use the demo image</li>
-                            <li>Select a layer to see its feature maps</li>
-                            <li>Explore how the network transforms the image at each step</li>
-                        </ol>
-                    </div>
-                </div>
+                <div id="status" class="status"></div>
             </div>
         </div>
 
-        <footer class="footer">
-            <p>Built with TensorFlow.js • <a href="../cnn-builder/" target="_blank">← Back to CNN Builder</a></p>
-        </footer>
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>🔍 Model Layers</h3>
+                <ul id="layerList" class="layer-list">
+                    <li class="empty-state">
+                        <div class="icon">🧠</div>
+                        <p>Load a model to explore its layers</p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="visualization">
+                <div id="visualizationContent" class="empty-state">
+                    <div class="icon">🎯</div>
+                    <h3>Ready to Visualize</h3>
+                    <p>Load a CNN model and select a layer to see its feature maps and activations</p>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
     <script src="app-fixed.js"></script>
 </body>

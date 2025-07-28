@@ -60,6 +60,16 @@ body {
   box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
 }
 
+.home-link {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+
+.home-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+}
+
 .app-container {
   max-width: 1200px;
   margin: 2rem auto;
