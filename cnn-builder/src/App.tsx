@@ -9,13 +9,13 @@ function App() {
         <h1>🧠 MNIST CNN Builder</h1>
         <nav className="app-nav">
           <a 
-            href="../"
+            href="/MNIST-CNN-Builder/docs/"
             className="nav-link home-link"
           >
             ← Back to Main
           </a>
           <a 
-            href="../feature-map-visualizer/index.html"
+            href="/MNIST-CNN-Builder/feature-map-visualizer/"
             target="_blank" 
             rel="noopener noreferrer"
             className="nav-link feature-map-link"

@@ -256,7 +256,7 @@ const ImportExportControls: React.FC<ImportExportControlsProps> = ({
             <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#1a1a1a', borderRadius: '8px', border: '1px solid #333' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', color: '#4e9cff' }}>Export Options</h4>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'white' }}>
                         <input 
                             type="radio" 
                             value="architecture" 
@@ -266,7 +266,7 @@ const ImportExportControls: React.FC<ImportExportControlsProps> = ({
                         />
                         🏗️ Architecture Only
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: hasTrainedModel ? 'pointer' : 'not-allowed', opacity: hasTrainedModel ? 1 : 0.5 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: hasTrainedModel ? 'pointer' : 'not-allowed', opacity: hasTrainedModel ? 1 : 0.5, color: 'white' }}>
                         <input 
                             type="radio" 
                             value="weights" 
@@ -277,7 +277,7 @@ const ImportExportControls: React.FC<ImportExportControlsProps> = ({
                         />
                         ⚖️ With Weights
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: hasTrainedModel ? 'pointer' : 'not-allowed', opacity: hasTrainedModel ? 1 : 0.5 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: hasTrainedModel ? 'pointer' : 'not-allowed', opacity: hasTrainedModel ? 1 : 0.5, color: 'white' }}>
                         <input 
                             type="radio" 
                             value="complete" 
