@@ -15,12 +15,11 @@ class DummyMNISTDataLoader {
     private readonly NUM_TEST_ELEMENTS = 200;
 
     async loadData(): Promise<DummyMNISTData> {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         if (this.data) {
             return this.data;
         }
 
-        console.log('Creating dummy MNIST data for testing...');
+        // console.log('Creating dummy MNIST data for testing...');
 
         // Create dummy training data that resembles MNIST
         const trainImages = tf.randomUniform([this.NUM_TRAIN_ELEMENTS, 28, 28, 1], 0, 1) as tf.Tensor4D;
@@ -43,8 +42,8 @@ class DummyMNISTDataLoader {
             testLabels
         };
 
-        console.log('Dummy MNIST data created successfully');
-        return this.data!;
+        // console.log('Dummy MNIST data created successfully');
+        return this.data;
     }
 
     getTrainingBatch(batchSize: number): { images: tf.Tensor4D; labels: tf.Tensor2D } | null {

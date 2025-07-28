@@ -49,6 +49,51 @@ Each layer includes detailed explanations, parameter descriptions, and best prac
 
 ## 🎯 Advanced Features & Functionality
 
+### 🧠 Feature Map Visualizer
+Explore what your CNN layers actually learn with our **[Feature Map Visualizer](feature-map-visualizer/)**:
+- **Layer-by-layer Analysis**: See feature maps for each convolutional layer
+- **Dense Layer Activations**: Interactive bar charts showing neuron activations
+- **Real-time Visualization**: Watch features activate as you feed images through the network
+- **Enhanced Rendering**: Pixel-perfect visualization with crisp edges and optimal quality
+
+### 🔄 Model Import/Export System
+- **Architecture Only**: Export just the layer structure and hyperparameters
+- **With Weights**: Include trained model parameters for complete restoration
+- **Complete Export**: Full model + training history + performance metrics
+- **JSON Format**: Human-readable and easily shareable format
+
+### 📈 Training & Performance
+- **Live Charts**: Real-time accuracy and loss visualization using Chart.js
+- **Multiple Metrics**: Track accuracy, validation accuracy, loss, and validation loss
+- **Training History**: Complete record of all training sessions
+- **Model Comparison**: Compare different architectures and their performance
+
+## 🚀 Quick Start Guide
+
+### 5-Minute Demo
+1. **Add Basic CNN Layers**:
+   - Conv2D: 8 filters, 3x3 kernel → Click "Add Layer"
+   - ReLU: No parameters → Click "Add Layer"  
+   - MaxPooling2D: 2x2 pool → Click "Add Layer"
+   - Flatten: No parameters → Click "Add Layer"
+   - Dense: 10 units → Click "Add Layer"
+   - Softmax: No parameters → Click "Add Layer"
+
+2. **Configure Training**:
+   - Epochs: 3 (for quick demo)
+   - Batch Size: 32
+   - Learning Rate: 0.001
+   - Optimizer: Adam
+
+3. **Train**: Click "Start Training" and watch the live chart update
+4. **Export**: Save your model architecture for later use
+
+### Pro Tips
+- Start with fewer filters (8-16) and gradually increase
+- Always use ReLU after Conv2D layers
+- Add Dropout (0.25) before Dense layers to prevent overfitting
+- Use BatchNormalization for faster training convergence
+
 ### Intelligent Architecture Validation
 The platform includes sophisticated validation systems that ensure your CNN architectures are both valid and optimal:
 

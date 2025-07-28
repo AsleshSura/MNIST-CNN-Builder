@@ -67,7 +67,7 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
                 await mnistDataLoader.loadData();
                 setDataLoaded(true);
                 setUsingDummyData(false);
-                console.log('Real MNIST data loaded successfully');
+                // console.log('Real MNIST data loaded successfully');
             } catch (error) {
                 console.warn('Failed to load real MNIST data, using dummy data:', error);
                 // Fallback to dummy data
@@ -75,7 +75,7 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
                     await dummyMnistDataLoader.loadData();
                     setDataLoaded(true);
                     setUsingDummyData(true);
-                    console.log('Dummy MNIST data loaded successfully');
+                    // console.log('Dummy MNIST data loaded successfully');
                 } catch (dummyError) {
                     console.error('Failed to load dummy data:', dummyError);
                     setDataLoaded(false);
@@ -174,7 +174,7 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
 
             modelRef.current = model;
 
-            console.log('Starting training...');
+            // console.log('Starting training...');
 
             // Use the appropriate data loader
             const dataLoader = usingDummyData ? dummyMnistDataLoader : mnistDataLoader;
@@ -243,6 +243,8 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
             alert('Training failed. Check console for details.');
         } finally {
             setIsTraining(false);
+            // Clean up any remaining tensors
+            tf.dispose();
         }
     };
 

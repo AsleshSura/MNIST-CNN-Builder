@@ -22,7 +22,7 @@ class MNISTDataLoader {
             return this.data;
         }
 
-        console.log('Loading MNIST data...');
+        // console.log('Loading MNIST data...');
 
         // Load the images sprite and labels
         const [imagesResponse, labelsResponse] = await Promise.all([
@@ -96,7 +96,7 @@ class MNISTDataLoader {
 
         // Clean up
         URL.revokeObjectURL(imageUrl);
-        console.log('MNIST data loaded successfully');
+        // console.log('MNIST data loaded successfully');
 
         return this.data!
     }
