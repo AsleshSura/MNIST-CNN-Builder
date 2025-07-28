@@ -7,34 +7,19 @@ let layers = [];
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('CNN Feature Map Visualizer loaded');
-    initializeApp();
-});
-
-// Wait for everything to load
-window.addEventListener('load', async function() {
-    console.log('Page loaded, waiting for TensorFlow.js...');
     
-    // Wait for TensorFlow.js with multiple attempts
-    let attempts = 0;
-    while (typeof tf === 'undefined' && attempts < 20) {
-        await new Promise(resolve => setTimeout(resolve, 250));
-        attempts++;
-    }
-    
+    // Wait for TensorFlow.js to load
     if (typeof tf === 'undefined') {
-        console.error('❌ TensorFlow.js failed to load');
-        showStatus('❌ TensorFlow.js failed to load. Please refresh the page.');
-        return;
+        console.log('Waiting for TensorFlow.js to load...');
+        setTimeout(initializeApp, 1000);
+    } else {
+        initializeApp();
     }
-    
-    console.log('✅ TensorFlow.js loaded successfully:', tf.version);
-    console.log('🚀 Backend:', tf.getBackend());
-    
-    // Update status to show ready
-    showStatus('✅ TensorFlow.js loaded. Click "Load Demo CNN" to start.');
 });
 
 function initializeApp() {
+    console.log('TensorFlow.js version:', tf.version);
+    
     // Set up file input event listeners
     const modelFileInput = document.getElementById('model-file');
     const imageFileInput = document.getElementById('image-file');
@@ -47,38 +32,32 @@ function initializeApp() {
         imageFileInput.addEventListener('change', loadCustomImage);
     }
     
-    console.log('App event listeners initialized');
+    // Enable memory management
+    tf.engine().startScope();
+    
+    console.log('App initialized successfully!');
 }
 
 // Clean up resources before page unload
 window.addEventListener('beforeunload', function() {
-    cleanupResources();
-});
-
-function cleanupResources() {
-    try {
-        if (model && !model.isDisposedInternal) {
+    if (model && !model.isDisposedInternal) {
+        try {
             model.dispose();
-            console.log('Model disposed');
+        } catch (e) {
+            console.warn('Error disposing model:', e.message);
         }
-        if (inputImage && !inputImage.isDisposed) {
-            inputImage.dispose();
-            console.log('Input image disposed');
-        }
-        // Clean up TensorFlow.js memory
-        if (typeof tf !== 'undefined') {
-            tf.disposeVariables();
-            console.log('TensorFlow.js variables disposed');
-        }
-    } catch (e) {
-        console.warn('Error during cleanup:', e.message);
     }
-}
+    if (inputImage && !inputImage.isDisposed) {
+        try {
+            inputImage.dispose();
+        } catch (e) {
+            console.warn('Error disposing input image:', e.message);
+        }
+    }
+});
 
 // Create a demo CNN model
 async function createDemoModel() {
-    await tf.ready();
-    
     const demoModel = tf.sequential({
         layers: [
             tf.layers.conv2d({
@@ -157,16 +136,9 @@ function generateDemoImage() {
 // Load demo model - GLOBAL function for onclick
 async function loadDemoModel() {
     try {
-        // Check if TensorFlow.js is available
-        if (typeof tf === 'undefined') {
-            showStatus('❌ TensorFlow.js not loaded. Please wait and try again.');
-            return;
-        }
-        
         showStatus('Creating demo CNN model...', true);
-        console.log('Starting model creation...');
         
-        // Clean up existing model
+        // Only dispose if model exists and hasn't been disposed already
         if (model && !model.isDisposedInternal) {
             try {
                 model.dispose();
@@ -176,61 +148,34 @@ async function loadDemoModel() {
         }
         
         model = await createDemoModel();
-        console.log('Model created successfully');
         
-        // Extract layer information with error handling
-        layers = model.layers.map((layer, index) => {
-            try {
-                return {
-                    name: layer.name,
-                    index,
-                    shape: layer.outputShape,
-                    type: layer.getClassName()
-                };
-            } catch (e) {
-                console.warn(`Error processing layer ${index}:`, e);
-                return {
-                    name: `layer_${index}`,
-                    index,
-                    shape: null,
-                    type: 'Unknown'
-                };
-            }
-        });
-        
-        console.log('Extracted layer information:', layers);
+        // Extract layer information
+        layers = model.layers.map((layer, index) => ({
+            name: layer.name,
+            index,
+            shape: layer.outputShape,
+            type: layer.getClassName()
+        }));
         
         displayModelInfo();
         displayLayers();
         
-        // Enable image loading by adding a demo image button
-        const loadDemoBtn = document.getElementById('loadDemoBtn');
-        if (loadDemoBtn) {
-            // Add demo image button after model is loaded
-            const demoImageBtn = document.createElement('button');
-            demoImageBtn.className = 'btn';
-            demoImageBtn.textContent = '🖼️ Load Demo Image';
-            demoImageBtn.onclick = loadDemoImage;
-            demoImageBtn.style.marginLeft = '10px';
-            loadDemoBtn.parentNode.appendChild(demoImageBtn);
+        // Enable image loading
+        const demoImageBtn = document.getElementById('demo-image-btn');
+        const imageFileInput = document.getElementById('image-file');
+        
+        if (demoImageBtn) {
+            demoImageBtn.disabled = false;
+        }
+        if (imageFileInput) {
+            imageFileInput.disabled = false;
         }
         
         showStatus('Demo model loaded successfully! Now load an image.');
-        console.log('Model loading completed successfully');
         
     } catch (error) {
         console.error('Error loading demo model:', error);
         showStatus('Error loading demo model: ' + error.message);
-        
-        // Clean up on error
-        if (model && !model.isDisposedInternal) {
-            try {
-                model.dispose();
-            } catch (e) {
-                console.warn('Error disposing model after failure:', e.message);
-            }
-        }
-        model = null;
     }
 }
 
@@ -270,7 +215,7 @@ async function loadDemoImage() {
     try {
         showStatus('Generating demo image...', true);
         
-        // Clean up existing image
+        // Only dispose if inputImage exists and hasn't been disposed already
         if (inputImage && !inputImage.isDisposed) {
             try {
                 inputImage.dispose();
@@ -282,7 +227,7 @@ async function loadDemoImage() {
         inputImage = generateDemoImage();
         
         // Display the image
-        await displayInputImage();
+        displayInputImage();
         
         // Update layer list to enable selection
         displayLayers();
@@ -292,16 +237,6 @@ async function loadDemoImage() {
     } catch (error) {
         console.error('Error loading demo image:', error);
         showStatus('Error loading demo image: ' + error.message);
-        
-        // Clean up on error
-        if (inputImage && !inputImage.isDisposed) {
-            try {
-                inputImage.dispose();
-            } catch (e) {
-                console.warn('Error disposing input image after failure:', e.message);
-            }
-        }
-        inputImage = null;
     }
 }
 
@@ -380,55 +315,31 @@ function displayModelInfo() {
 
 // Display layer list
 function displayLayers() {
-    const layerList = document.getElementById('layerList');
+    const layerList = document.getElementById('layer-list');
     if (!layerList) return;
-    
-    if (!layers || layers.length === 0) {
-        layerList.innerHTML = '<li class="empty-state"><div class="icon">🧠</div><p>Load a model first</p></li>';
-        return;
-    }
     
     const visualizableLayers = layers.filter(layer => 
         layer.type === 'Conv2D' || layer.type === 'Dense'
     );
     
-    if (visualizableLayers.length === 0) {
-        layerList.innerHTML = '<li class="empty-state"><p style="color: #ff6b6b;">No visualizable layers found</p></li>';
-        return;
-    }
-    
-    layerList.innerHTML = visualizableLayers.map(layer => {
-        const isDisabled = !inputImage;
-        const shapeText = Array.isArray(layer.shape) ? layer.shape.slice(1).join(' × ') : 'N/A';
-        
-        return `
-            <li class="layer-item ${isDisabled ? 'disabled' : ''}" 
-                 onclick="${!isDisabled ? `selectLayer(${layer.index})` : ''}"
-                 id="layer-${layer.index}">
-                <div style="font-weight: 600; color: #2196F3; font-size: 1.1rem; margin-bottom: 5px;">
-                    ${layer.name}
-                </div>
-                <div style="font-size: 0.9rem; opacity: 0.8;">
-                    Type: ${layer.type} | Shape: ${shapeText}
-                </div>
-                ${isDisabled ? '<div style="font-size: 0.8rem; color: #ff6b6b; margin-top: 5px;">Load an image first</div>' : ''}
-            </li>
-        `;
-    }).join('');
-    
-    console.log(`Displayed ${visualizableLayers.length} visualizable layers`);
+    layerList.innerHTML = visualizableLayers.map(layer => `
+        <div class="layer-item ${!inputImage ? 'disabled' : ''}" 
+             onclick="${inputImage ? `selectLayer(${layer.index})` : ''}"
+             id="layer-${layer.index}">
+            <div style="font-weight: 600; color: #2196F3;">${layer.name}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">
+                Type: ${layer.type} | Shape: ${Array.isArray(layer.shape) ? layer.shape.slice(1).join(' × ') : 'N/A'}
+            </div>
+        </div>
+    `).join('');
 }
 
 // Select a layer for visualization - GLOBAL function for onclick
 async function selectLayer(layerIndex) {
-    if (!model || !inputImage) {
-        showStatus('Please load both model and image first');
-        return;
-    }
+    if (!model || !inputImage) return;
     
     try {
         showStatus('Generating feature maps...', true);
-        console.log(`Generating feature maps for layer ${layerIndex}`);
         
         selectedLayer = layerIndex;
         
@@ -444,25 +355,15 @@ async function selectLayer(layerIndex) {
         // Use tf.tidy to manage memory automatically
         const featureMaps = tf.tidy(() => {
             let currentOutput = inputImage;
-            console.log('Starting forward pass...');
             
             // Pass through layers up to the selected layer
             for (let i = 0; i <= layerIndex; i++) {
                 const layer = model.layers[i];
-                console.log(`Processing layer ${i}: ${layer.name} (${layer.getClassName()})`);
-                try {
-                    currentOutput = layer.apply(currentOutput);
-                    console.log(`Layer ${i} output shape:`, currentOutput.shape);
-                } catch (e) {
-                    console.error(`Error in layer ${i}:`, e);
-                    throw e;
-                }
+                currentOutput = layer.apply(currentOutput);
             }
             
             return currentOutput;
         });
-        
-        console.log('Feature maps generated, shape:', featureMaps.shape);
         
         // Display feature maps
         const layer = model.layers[layerIndex];
@@ -473,8 +374,6 @@ async function selectLayer(layerIndex) {
             featureMaps.dispose();
         }
         
-        console.log('Layer visualization completed successfully');
-        
     } catch (error) {
         console.error('Error generating feature maps:', error);
         showStatus('Error generating feature maps: ' + error.message);
@@ -482,33 +381,27 @@ async function selectLayer(layerIndex) {
 }
 
 // Display the input image
-async function displayInputImage() {
+function displayInputImage() {
     const preview = document.getElementById('image-preview');
-    if (!preview || !inputImage) return;
+    if (!preview) return;
     
-    try {
-        // Create canvas to display the image
-        const canvas = document.createElement('canvas');
-        canvas.width = 196; // 28 * 7 for better visibility
-        canvas.height = 196;
-        canvas.style.cssText = `
-            border: 2px solid #2196F3;
-            border-radius: 8px;
-            image-rendering: pixelated;
-            background: #000;
-            display: block;
-            margin: 10px auto;
-        `;
-        canvas.classList.add('pixel-crisp');
-        
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = false;
-        ctx.mozImageSmoothingEnabled = false;
-        ctx.webkitImageSmoothingEnabled = false;
-        ctx.msImageSmoothingEnabled = false;
-        
-        // Get image data from tensor
-        const data = await inputImage.data();
+    // Create canvas to display the image
+    const canvas = document.createElement('canvas');
+    canvas.width = 196; // 28 * 7 for better visibility
+    canvas.height = 196;
+    canvas.style.border = '2px solid #2196F3';
+    canvas.style.borderRadius = '8px';
+    canvas.style.imageRendering = 'pixelated';
+    canvas.classList.add('pixel-crisp');
+    
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
+    
+    // Get image data from tensor
+    inputImage.data().then(data => {
         const imageData = ctx.createImageData(28, 28);
         const imgData = imageData.data;
         
@@ -534,22 +427,16 @@ async function displayInputImage() {
         
         // Scale up for display with pixel-perfect rendering
         ctx.drawImage(tempCanvas, 0, 0, 196, 196);
-        
-        // Clear previous content and add canvas
-        preview.innerHTML = '<h4 style="color: #64B5F6; margin-bottom: 10px;">Input Image (28×28):</h4>';
-        preview.appendChild(canvas);
-        
-        console.log('Input image displayed successfully');
-        
-    } catch (error) {
-        console.error('Error displaying input image:', error);
-        preview.innerHTML = '<p style="color: #ff6b6b;">Error displaying image</p>';
-    }
+    });
+    
+    // Clear previous content and add canvas
+    preview.innerHTML = '<h4>Input Image:</h4>';
+    preview.appendChild(canvas);
 }
 
 // Display feature maps
 async function displayFeatureMaps(featureMaps, layer) {
-    const visualizationContent = document.getElementById('visualizationContent');
+    const visualizationContent = document.getElementById('visualization-content');
     if (!visualizationContent) return;
     
     // Get feature map data
@@ -574,8 +461,8 @@ async function displayFeatureMaps(featureMaps, layer) {
         box-shadow: 0 8px 25px rgba(33, 150, 243, 0.15);
     `;
     layerInfo.innerHTML = `
-        <h3 style="color: #2d3748; font-size: 2rem; margin-bottom: 15px; text-shadow: none; font-weight: 600;">${layer.name} (${layer.getClassName()})</h3>
-        <p style="font-size: 1.2rem; margin: 10px 0; color: #4a5568;"><strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}</p>
+        <h3 style="color: #64B5F6; font-size: 2rem; margin-bottom: 15px; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);">${layer.name} (${layer.getClassName()})</h3>
+        <p style="font-size: 1.2rem; margin: 10px 0; color: rgb(0, 0, 0);"><strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}</p>
         <p style="font-size: 1.2rem; margin: 10px 0; color: #4a5568;"><strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}</p>
     `;
     visualizationContent.appendChild(layerInfo);
@@ -686,211 +573,141 @@ async function displayFeatureMaps(featureMaps, layer) {
         
         const container = document.createElement('div');
         container.className = 'dense-layer-container';
-        container.style.cssText = `
-            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
-            border: 1px solid rgba(33, 150, 243, 0.3);
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-        `;
         
         const title = document.createElement('h3');
         title.textContent = `Dense Layer Activations (${units} units)`;
-        title.style.cssText = `
-            color: #2d3748;
-            font-size: 1.6rem;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-        `;
         container.appendChild(title);
         
         // Range indicator
+        const rangeIndicator = document.createElement('div');
+        rangeIndicator.className = 'range-indicator';
         const min = Math.min(...data);
         const max = Math.max(...data);
         const range = max - min;
-        
-        const rangeIndicator = document.createElement('div');
-        rangeIndicator.style.cssText = `
-            background: rgba(0, 0, 0, 0.4);
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: bold;
-        `;
         rangeIndicator.textContent = `Activation Range: ${min.toFixed(3)} to ${max.toFixed(3)}`;
+        rangeIndicator.style.fontSize = '14px';
+        rangeIndicator.style.fontWeight = 'bold';
+        rangeIndicator.style.color = '#ffffff';
+        rangeIndicator.style.padding = '10px';
+        rangeIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+        rangeIndicator.style.borderRadius = '5px';
+        rangeIndicator.style.marginBottom = '15px';
         container.appendChild(rangeIndicator);
         
-        // Create bars container
-        const barsWrapper = document.createElement('div');
-        barsWrapper.style.cssText = `
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 20px;
-            position: relative;
-            overflow-x: auto;
-            margin-bottom: 15px;
-        `;
-        
+        // Create a container with relative positioning for bars
         const barsContainer = document.createElement('div');
-        barsContainer.style.cssText = `
-            display: flex;
-            align-items: flex-end;
-            justify-content: flex-start;
-            height: 200px;
-            min-width: ${Math.min(units * 12, 1200)}px;
-            position: relative;
-            gap: 1px;
-        `;
+        barsContainer.className = 'dense-bars-container';
         
         // Add guide lines
-        for (let i = 1; i <= 4; i++) {
+        const guides = [0.25, 0.5, 0.75, 1.0];
+        guides.forEach(level => {
             const guideLine = document.createElement('div');
-            const percent = (i * 25);
-            guideLine.style.cssText = `
-                position: absolute;
-                bottom: ${percent}%;
-                left: 0;
-                right: 0;
-                height: 1px;
-                background: rgba(255, 255, 255, 0.2);
-                pointer-events: none;
-            `;
+            guideLine.className = 'guide-line';
+            guideLine.style.bottom = `${level * 100}%`;
             
-            const label = document.createElement('span');
-            label.style.cssText = `
-                position: absolute;
-                right: 5px;
-                top: -8px;
-                font-size: 10px;
-                color: rgba(255, 255, 255, 0.7);
-                background: rgba(0, 0, 0, 0.5);
-                padding: 2px 4px;
-                border-radius: 2px;
-            `;
-            label.textContent = (percent / 100).toFixed(2);
-            guideLine.appendChild(label);
+            const guideLabel = document.createElement('div');
+            guideLabel.className = 'guide-label';
+            guideLabel.textContent = level.toFixed(2);
+            guideLabel.style.bottom = `${level * 100}%`;
+            
             barsContainer.appendChild(guideLine);
-        }
+            barsContainer.appendChild(guideLabel);
+        });
         
-        // Determine how many units to show
-        const maxUnitsToShow = Math.min(units, 100);
+        // Add zero baseline
+        const zeroLine = document.createElement('div');
+        zeroLine.className = 'zero-baseline';
+        barsContainer.appendChild(zeroLine);
         
-        // Create bars
+        // Determine how many units to show based on container width
+        const maxUnitsToShow = Math.min(units, 100); // Limit for performance and clarity
+        
+        // Create bars with labels
         for (let i = 0; i < maxUnitsToShow; i++) {
             const value = data[i];
-            const normalized = range > 0 ? Math.max(0, Math.min(1, (value - min) / range)) : 0;
-            const barHeight = Math.max(normalized * 180, 2);
+            const normalized = range > 0 ? (value - min) / range : 0;
+            const height = Math.max(normalized * 180, 2); // Minimum height for visibility
             
-            const barWrapper = document.createElement('div');
-            barWrapper.style.cssText = `
-                position: relative;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-end;
-                width: 10px;
-                height: 100%;
-                margin-right: 1px;
-            `;
+            // Bar container
+            const barContainer = document.createElement('div');
+            barContainer.className = 'dense-activation-bar';
+            barContainer.style.width = '10px';
+            barContainer.style.minWidth = '10px';
             
+            // The actual bar
             const bar = document.createElement('div');
-            const hue = Math.floor((1 - normalized) * 240); // Blue to red scale
-            bar.style.cssText = `
-                width: 8px;
-                height: ${barHeight}px;
-                background: linear-gradient(to top, hsl(${hue}, 70%, 45%), hsl(${hue}, 70%, 65%));
-                border-radius: 2px 2px 0 0;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                transition: all 0.2s ease;
-                cursor: pointer;
-                box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-            `;
+            bar.className = 'dense-bar';
+            bar.style.height = `${height}px`;
+            bar.style.width = '8px';
+            bar.style.minWidth = '8px';
+            // Use color for differentiation
+            const hue = Math.floor(normalized * 240); // blue to red
+            bar.style.background = `hsl(${hue}, 80%, 60%)`;
             
-            // Tooltip
-            const tooltip = document.createElement('div');
-            tooltip.style.cssText = `
-                position: absolute;
-                bottom: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 5px 8px;
-                border-radius: 4px;
-                font-size: 11px;
-                white-space: nowrap;
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
-                z-index: 1000;
-                margin-bottom: 5px;
-            `;
-            tooltip.textContent = `Unit ${i + 1}: ${value.toFixed(4)}`;
+            // Value tooltip that appears on hover
+            const valueTooltip = document.createElement('div');
+            valueTooltip.className = 'activation-value';
+            valueTooltip.textContent = `#${i+1}: ${value.toFixed(3)}`;
             
-            // Label
-            const label = document.createElement('div');
-            label.style.cssText = `
-                position: absolute;
-                bottom: -20px;
-                font-size: 8px;
-                color: rgba(255, 255, 255, 0.8);
-                font-weight: bold;
-                text-align: center;
-                width: 20px;
-                left: 50%;
-                transform: translateX(-50%) rotate(-45deg);
-                transform-origin: center;
-            `;
-            label.textContent = i + 1;
+            // Neuron number label
+            const neuronLabel = document.createElement('div');
+            neuronLabel.className = 'neuron-number neuron-value'; // Add neuron-value class for text styling
+            neuronLabel.textContent = i + 1; // 1-indexed for user clarity
+            neuronLabel.style.position = 'absolute';
+            neuronLabel.style.bottom = '-15px';
             
-            // Hover effects
-            barWrapper.addEventListener('mouseenter', () => {
-                tooltip.style.opacity = '1';
-                bar.style.transform = 'scaleX(1.5)';
-                bar.style.filter = 'brightness(1.2)';
-            });
+            // Add to DOM
+            barContainer.appendChild(bar);
+            barContainer.appendChild(neuronLabel);
+            barContainer.appendChild(valueTooltip);
             
-            barWrapper.addEventListener('mouseleave', () => {
-                tooltip.style.opacity = '0';
-                bar.style.transform = 'scaleX(1)';
-                bar.style.filter = 'brightness(1)';
-            });
+            // Debug - add direct inline styles for visibility
+            barContainer.style.display = 'flex';
+            barContainer.style.flexDirection = 'column';
+            barContainer.style.alignItems = 'center';
+            barContainer.style.justifyContent = 'flex-end';
+            barContainer.style.position = 'relative';
+            barContainer.style.height = '100%';
             
-            barWrapper.appendChild(bar);
-            barWrapper.appendChild(tooltip);
-            barWrapper.appendChild(label);
-            barsContainer.appendChild(barWrapper);
+            barsContainer.appendChild(barContainer);
         }
         
-        barsWrapper.appendChild(barsContainer);
-        container.appendChild(barsWrapper);
+        container.appendChild(barsContainer);
+        
+        // Debug log for developers
+        console.log("Dense layer visualization:", {
+            units,
+            maxUnitsToShow,
+            min,
+            max,
+            range,
+            barsCreated: barsContainer.childElementCount,
+            container: container,
+            barsContainer: barsContainer
+        });
         
         // Information note
         const note = document.createElement('p');
-        note.style.cssText = `
-            text-align: center;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-style: italic;
-        `;
-        note.textContent = `Showing ${maxUnitsToShow} of ${units} neurons. Hover over bars for details.`;
+        note.textContent = 'Each bar represents one neuron\'s activation level';
+        note.style.cssText = 'text-align: center; margin-top: 10px; font-size: 0.9rem;';
         container.appendChild(note);
         
-        if (units > maxUnitsToShow) {
+        // Add debug information
+        const debugInfo = document.createElement('div');
+        debugInfo.style.padding = '10px';
+        debugInfo.style.marginTop = '20px';
+        debugInfo.style.backgroundColor = 'rgba(255,0,0,0.2)';
+        debugInfo.style.borderRadius = '5px';
+        debugInfo.innerHTML = `
+            <p style="margin: 0; color: white;">Debug: ${maxUnitsToShow} neuron bars should appear above</p>
+            <p style="margin: 5px 0 0; color: white;">If bars are not visible, please check browser console</p>
+        `;
+        container.appendChild(debugInfo);
+        
+        if (units > 500) {
             const limitNote = document.createElement('p');
-            limitNote.style.cssText = `
-                text-align: center;
-                margin-top: 10px;
-                color: #FF9800;
-                font-size: 0.85rem;
-                font-weight: 600;
-            `;
-            limitNote.textContent = `Limited to first ${maxUnitsToShow} units for performance`;
+            limitNote.textContent = `Showing first 500 of ${units} units`;
+            limitNote.style.cssText = 'text-align: center; margin-top: 15px; color: #FF9800;';
             container.appendChild(limitNote);
         }
         
@@ -902,28 +719,24 @@ async function displayFeatureMaps(featureMaps, layer) {
 
 // Show status message
 function showStatus(message, loading = false) {
-    const status = document.getElementById('status');
-    if (!status) return;
-    
-    status.className = 'status show';
+    const visualizationContent = document.getElementById('visualization-content');
+    if (!visualizationContent) return;
     
     if (loading) {
-        status.className += ' loading';
-        status.innerHTML = `<span class="loading-spinner"></span>${message}`;
-    } else if (message.includes('Error') || message.includes('❌')) {
-        status.className += ' error';
-        status.innerHTML = message;
-    } else if (message.includes('✅') || message.includes('success')) {
-        status.className += ' success';
-        status.innerHTML = message;
+        visualizationContent.innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>${message}</p>
+            </div>
+        `;
     } else {
-        status.innerHTML = message;
-    }
-    
-    // Hide after 5 seconds if not loading
-    if (!loading) {
-        setTimeout(() => {
-            status.className = 'status';
-        }, 5000);
+        // If we're not in the middle of visualization, show the message briefly
+        if (!visualizationContent.innerHTML.includes('feature-maps-container')) {
+            visualizationContent.innerHTML = `
+                <div class="status">
+                    <h3>${message}</h3>
+                </div>
+            `;
+        }
     }
 }
