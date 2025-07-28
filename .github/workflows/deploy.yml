@@ -1,60 +1,50 @@
-name: Deploy to GitHub Pages
+name: Update Build
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+    paths:
+      - 'cnn-builder/**'
 
 jobs:
-  build:
+  update-build:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'cnn-builder/package-lock.json'
         
-    - name: Install CNN Builder dependencies
+    - name: Install and build
       run: |
         cd cnn-builder
         npm ci
-        
-    - name: Build CNN Builder
-      run: |
-        cd cnn-builder
         npm run build
         
-    - name: Create deployment directory
+    - name: Update docs
       run: |
-        mkdir -p docs/cnn-builder
-        mkdir -p docs/feature-map-visualizer
+        rm -rf docs/cnn-builder
+        cp -r cnn-builder/build docs/cnn-builder
         
-    - name: Copy CNN Builder build to docs/cnn-builder
+    - name: Commit changes
       run: |
-        cp -r cnn-builder/build/* docs/cnn-builder/
-        
-    - name: Copy Feature Map Visualizer to docs
-      run: |
-        cp feature-map-visualizer/* docs/feature-map-visualizer/
-        
-    - name: Copy root files to docs
-      run: |
-        cp .nojekyll docs/
-        cp index.html docs/
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add docs/cnn-builder
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "🚀 Update React build"
+          git push
+        fi
         
     - name: Create index redirect for feature map visualizer
       run: |
