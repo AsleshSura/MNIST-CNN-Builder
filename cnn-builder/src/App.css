@@ -51,23 +51,23 @@ body {
 }
 
 .feature-map-link {
-  background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .feature-map-link:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .home-link {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .home-link:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .app-container {
@@ -180,27 +180,27 @@ button:disabled {
 
 /* Validation styles */
 .validation-error {
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: #e53e3e;
+  background: rgba(229, 62, 62, 0.1);
+  border: 1px solid rgba(229, 62, 62, 0.3);
   border-radius: 6px;
   padding: 0.75rem;
   margin: 1rem 0;
 }
 
 .validation-warning {
-  color: #ffd93d;
-  background: rgba(255, 217, 61, 0.1);
-  border: 1px solid rgba(255, 217, 61, 0.3);
+  color: #d69e2e;
+  background: rgba(214, 158, 46, 0.1);
+  border: 1px solid rgba(214, 158, 46, 0.3);
   border-radius: 6px;
   padding: 0.75rem;
   margin: 1rem 0;
 }
 
 .validation-success {
-  color: #51cf66;
-  background: rgba(81, 207, 102, 0.1);
-  border: 1px solid rgba(81, 207, 102, 0.3);
+  color: #38a169;
+  background: rgba(56, 161, 105, 0.1);
+  border: 1px solid rgba(56, 161, 105, 0.3);
   border-radius: 6px;
   padding: 0.75rem;
   margin: 1rem 0;
@@ -221,13 +221,13 @@ button:disabled {
 
 .layer-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(78, 156, 255, 0.3);
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
 .layer-item.editing {
-  background: rgba(78, 156, 255, 0.1);
-  border-color: rgba(78, 156, 255, 0.5);
-  box-shadow: 0 0 8px rgba(78, 156, 255, 0.3);
+  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
 }
 
 .layer-info {
@@ -236,7 +236,7 @@ button:disabled {
 
 .layer-type {
   font-weight: 600;
-  color: #4e9cff;
+  color: #667eea;
   font-size: 1.1rem;
 }
 
@@ -428,7 +428,7 @@ button:disabled {
 
 .layer-name {
   font-weight: 600;
-  color: #4e9cff;
+  color: #667eea;
   font-size: 0.9rem;
 }
 
@@ -447,7 +447,7 @@ button:disabled {
 
 .layer-arrow {
   font-size: 1.5rem;
-  color: #4e9cff;
+  color: #667eea;
   margin: 0 0.5rem;
   align-self: center;
 }
