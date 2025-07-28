@@ -15,7 +15,7 @@ function App() {
             ← Back to Main
           </a>
           <a 
-            href="/MNIST-CNN-Builder/feature-map-visualizer/"
+            href="https://asleshsura.github.io/MNIST-CNN-Builder/feature-map-visualizer/"
             target="_blank" 
             rel="noopener noreferrer"
             className="nav-link feature-map-link"
