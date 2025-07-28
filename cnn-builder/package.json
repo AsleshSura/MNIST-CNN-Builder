@@ -2,7 +2,7 @@
   "name": "cnn-builder",
   "version": "0.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "/MNIST-CNN-Builder/cnn-builder",
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-vis": "^1.1.0",

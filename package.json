@@ -1,0 +1,15 @@
+{
+  "name": "mnist-cnn-builder",
+  "version": "1.0.0",
+  "description": "MNIST CNN Builder - Interactive CNN Architecture Builder and Visualizer",
+  "private": true,
+  "scripts": {
+    "deploy": "cd cnn-builder && npm run build && cd .. && cp -r cnn-builder/build/* docs/cnn-builder/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AsleshSura/MNIST-CNN-Builder.git"
+  },
+  "author": "AsleshSura",
+  "license": "MIT"
+}

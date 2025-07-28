@@ -27,15 +27,11 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
         
-    - name: Install root dependencies
-      run: npm install
-      
     - name: Install CNN Builder dependencies
       run: |
         cd cnn-builder
-        npm install
+        npm ci
         
     - name: Build CNN Builder
       run: |
@@ -55,8 +51,11 @@ jobs:
       run: |
         cp feature-map-visualizer/* docs/feature-map-visualizer/
         
-    - name: Create index redirect for feature map visualizer
+    - name: Copy root files to docs
       run: |
+        cp .nojekyll docs/
+        cp index.html docs/
+        
     - name: Create index redirect for feature map visualizer
       run: |
         echo '<!DOCTYPE html>
