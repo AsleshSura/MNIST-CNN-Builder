@@ -59,10 +59,47 @@ export type CNNLayer =
 | DenseLayer
 | SoftmaxLayer;
 
+export interface ModelWeights {
+    layerWeights: Array<{
+        layerIndex: number;
+        layerName: string;
+        layerType: string;
+        weights: Array<{
+            name: string;
+            shape: number[];
+            values: any; // TensorFlow.js data can be various types
+        }>;
+    }>;
+    modelTopology?: any; // TensorFlow.js model topology
+}
+
+export interface TrainingHistory {
+    epochs: number[];
+    losses: number[];
+    accuracies: number[];
+    valLosses?: number[];
+    valAccuracies?: number[];
+    trainingTime: number; // in milliseconds
+    finalMetrics?: {
+        accuracy: number;
+        loss: number;
+        valAccuracy?: number;
+        valLoss?: number;
+    };
+}
+
 export interface ModelConfig {
     layers: CNNLayer[];
     trainingSettings: TrainingSettings;
     metadata: ModelMetadata;
+    weights?: ModelWeights;
+    trainingHistory?: TrainingHistory;
+    modelPerformance?: {
+        parametersCount: number;
+        trainableParameters: number;
+        nonTrainableParameters: number;
+        memoryUsage?: number; // in MB
+    };
 }
 
 export interface TrainingSettings {
@@ -75,4 +112,9 @@ export interface TrainingSettings {
 export interface ModelMetadata {
     label: string;
     timestamp: string;
+    version?: string;
+    description?: string;
+    author?: string;
+    tags?: string[];
+    exportType: 'architecture-only' | 'with-weights' | 'complete';
 }

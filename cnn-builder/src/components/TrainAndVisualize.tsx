@@ -38,9 +38,15 @@ interface TrainingMetrics {
 interface TrainAndVisualizeProps {
     layers: CNNLayer[];
     trainingSettings: TrainingSettings;
+    onTrainingUpdate?: (
+        model: tf.LayersModel | null,
+        metrics: TrainingMetrics[],
+        isTrainingStarted: boolean,
+        isTrainingComplete: boolean
+    ) => void;
 }
 
-const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingSettings }) => {
+const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingSettings, onTrainingUpdate }) => {
     const [isTraining, setIsTraining] = useState(false);
     const [isDataLoading, setIsDataLoading] = useState(false);
     const [trainingComplete, setTrainingComplete] = useState(false);
@@ -156,6 +162,9 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
         setMetrics([]);
         setCurrentEpoch(0);
 
+        // Notify parent about training start
+        onTrainingUpdate?.(null, [], true, false);
+
         try {
             const model = createModel();
             if (!model) {
@@ -202,6 +211,9 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
                     trainMetrics.push(epochMetrics);
                     setMetrics([...trainMetrics]);
 
+                    // Notify parent about training progress
+                    onTrainingUpdate?.(model, [...trainMetrics], false, false);
+
                     // Clean up tensors for this epoch
                     trainBatch.images.dispose();
                     trainBatch.labels.dispose();
@@ -222,6 +234,9 @@ const TrainAndVisualize: React.FC<TrainAndVisualizeProps> = ({ layers, trainingS
             }
 
             setTrainingComplete(true);
+            
+            // Notify parent about training completion
+            onTrainingUpdate?.(modelRef.current, trainMetrics, false, true);
 
         } catch (error) {
             console.error('Training failed:', error);
