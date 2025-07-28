@@ -109,7 +109,7 @@ The platform includes sophisticated validation systems that ensure your CNN arch
 - **Storage**: 100MB free space for dataset caching
 - **Internet**: Required for initial dataset download (50MB)
 
-### Quick Installation
+### 🚀 Getting Started
 ```bash
 # Clone the repository
 git clone https://github.com/AsleshSura/MNIST-CNN-Builder.git
@@ -118,13 +118,13 @@ cd MNIST-CNN-Builder/cnn-builder
 # Install dependencies
 npm install
 
-# Start the development server
+# Start the application
 npm start
 ```
 
 The application will automatically open at `http://localhost:3000`.
 
-### Alternative Deployment Options
+### 📦 Production Build
 ```bash
 # Build for production
 npm run build
@@ -386,32 +386,6 @@ Output (10 classes)
 - **Ensemble Methods**: Combine multiple models for better performance
 - **Adversarial Training**: Robustness testing against adversarial examples
 
-### Contributing to Development
-The project welcomes contributions in several areas:
-
-```bash
-# Development setup
-git clone https://github.com/AsleshSura/MNIST-CNN-Builder.git
-cd MNIST-CNN-Builder
-npm install
-npm run dev
-
-# Testing
-npm run test
-npm run test:coverage
-
-# Build and deploy
-npm run build
-npm run deploy
-```
-
-**Contribution Areas:**
-- New layer type implementations
-- Visualization enhancements
-- Performance optimizations
-- Educational content creation
-- Bug fixes and stability improvements
-
 ## 📊 Performance Benchmarks & Validation
 
 ### Standard Benchmarks
@@ -462,29 +436,6 @@ If you use this tool in academic research, please cite:
 - **MNIST Dataset**: LeCun, Bottou, Bengio, and Haffner for the benchmark dataset
 - **React Community**: For the robust frontend framework
 - **Open Source Contributors**: For libraries and tools that made this possible
-
-## 🚀 Future Development Roadmap
-
-### Short-term Goals (Next 3 months)
-- [ ] **Enhanced Visualizations**: 3D feature map exploration
-- [ ] **Model Zoo**: Pre-built architecture gallery
-- [ ] **Performance Metrics**: Advanced evaluation tools
-- [ ] **Mobile Optimization**: Better responsive design
-- [ ] **Accessibility**: Screen reader and keyboard navigation support
-
-### Medium-term Goals (6 months)
-- [ ] **Custom Datasets**: Upload and use your own data
-- [ ] **Transfer Learning**: Pre-trained model integration
-- [ ] **Cloud Training**: Offload computation to cloud services
-- [ ] **Collaboration**: Multi-user model development
-- [ ] **Advanced Layers**: Attention, normalization variants
-
-### Long-term Vision (1 year+)
-- [ ] **Multi-framework Support**: PyTorch.js integration
-- [ ] **AutoML Integration**: Automated architecture search
-- [ ] **Production Deployment**: One-click model serving
-- [ ] **Educational Curriculum**: Structured learning paths
-- [ ] **Research Platform**: Advanced experiment management
 
 ---
 

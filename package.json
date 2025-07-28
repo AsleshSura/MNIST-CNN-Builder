@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@tensorflow/tfjs": "^4.22.0",
-    "@tensorflow/tfjs-vis": "^1.5.1",
-    "@types/chart.js": "^2.9.41",
-    "chart.js": "^4.5.0"
-  }
-}
