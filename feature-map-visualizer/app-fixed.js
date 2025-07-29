@@ -1305,10 +1305,12 @@ async function displayFeatureMaps(featureMaps, layer) {
                 width: ${barWidth + 10}px;
                 left: 50%;
                 transform: translateX(-50%);
-                background: rgba(0, 0, 0, 0.7);
-                padding: 2px 4px;
-                border-radius: 3px;
-                border: 1px solid rgba(255, 255, 255, 0.3);
+                background: rgba(0, 0, 0, 0.9);
+                padding: 4px 6px;
+                border-radius: 4px;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+                z-index: 10;
             `;
             label.textContent = i + 1;
             
@@ -1317,16 +1319,20 @@ async function displayFeatureMaps(featureMaps, layer) {
                 tooltip.style.opacity = '1';
                 bar.style.transform = 'scaleX(1.5)';
                 bar.style.filter = 'brightness(1.2)';
-                label.style.background = 'rgba(33, 150, 243, 0.9)';
+                label.style.background = 'rgba(33, 150, 243, 0.95)';
                 label.style.color = 'white';
+                label.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+                label.style.transform = 'translateX(-50%) scale(1.1)';
             });
             
             barWrapper.addEventListener('mouseleave', () => {
                 tooltip.style.opacity = '0';
                 bar.style.transform = 'scaleX(1)';
                 bar.style.filter = 'brightness(1)';
-                label.style.background = 'rgba(0, 0, 0, 0.7)';
+                label.style.background = 'rgba(0, 0, 0, 0.9)';
                 label.style.color = 'white';
+                label.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                label.style.transform = 'translateX(-50%) scale(1)';
             });
             
             barWrapper.appendChild(bar);
