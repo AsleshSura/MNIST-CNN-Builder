@@ -246,8 +246,9 @@
                     <button id="loadCustomBtn" class="btn" onclick="loadCustomModel()">📁 Load Custom Model</button>
                     <input type="file" id="modelFileInput" style="display: none;" accept=".json,.h5" multiple>
                 </div>
-                <div class="control-group">
-                    <button id="loadCustomImageBtn" class="btn" onclick="loadCustomImageFile()" style="display: none;">🖼️ Load Custom Image</button>
+                <div class="control-group" id="imageControls" style="display: none;">
+                    <button id="loadDemoImageBtn" class="btn" onclick="loadDemoImage()">🖼️ Load Demo Image</button>
+                    <button id="loadCustomImageBtn" class="btn" onclick="loadCustomImageFile()">� Load Custom Image</button>
                     <input type="file" id="imageFileInput" style="display: none;" accept="image/*">
                 </div>
                 <div id="status" class="status"></div>

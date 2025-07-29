@@ -70,6 +70,13 @@ function cleanupResources() {
             tf.disposeVariables();
             console.log('TensorFlow.js variables disposed');
         }
+        
+        // Reset UI state
+        model = null;
+        inputImage = null;
+        layers = [];
+        hideImageLoadingOptions();
+        
     } catch (e) {
         console.warn('Error during cleanup:', e.message);
     }
@@ -222,6 +229,9 @@ async function loadDemoModel() {
             }
         }
         model = null;
+        
+        // Hide image controls on error
+        hideImageLoadingOptions();
     }
 }
 
@@ -640,6 +650,9 @@ async function handleCustomModelFiles(event) {
         }
         model = null;
         
+        // Hide image controls on error
+        hideImageLoadingOptions();
+        
         // Reset file input
         event.target.value = '';
     }
@@ -687,22 +700,24 @@ async function loadDemoImage() {
 
 // Show image loading options after model is loaded
 function showImageLoadingOptions() {
-    // Add demo image button
-    const loadDemoBtn = document.getElementById('loadDemoBtn');
-    if (loadDemoBtn && !document.getElementById('demoImageBtn')) {
-        const demoImageBtn = document.createElement('button');
-        demoImageBtn.id = 'demoImageBtn';
-        demoImageBtn.className = 'btn';
-        demoImageBtn.textContent = '🖼️ Load Demo Image';
-        demoImageBtn.onclick = loadDemoImage;
-        demoImageBtn.style.marginLeft = '10px';
-        loadDemoBtn.parentNode.appendChild(demoImageBtn);
+    // Show the image controls container
+    const imageControls = document.getElementById('imageControls');
+    if (imageControls) {
+        imageControls.style.display = 'block';
     }
     
-    // Show custom image button
-    const customImageBtn = document.getElementById('loadCustomImageBtn');
-    if (customImageBtn) {
-        customImageBtn.style.display = 'inline-block';
+    // Remove any duplicate buttons that might have been added dynamically
+    const existingDemoBtn = document.getElementById('demoImageBtn');
+    if (existingDemoBtn) {
+        existingDemoBtn.remove();
+    }
+}
+
+// Hide image loading options
+function hideImageLoadingOptions() {
+    const imageControls = document.getElementById('imageControls');
+    if (imageControls) {
+        imageControls.style.display = 'none';
     }
 }
 
