@@ -1185,17 +1185,25 @@ async function displayFeatureMaps(featureMaps, layer) {
             position: relative;
             overflow-x: auto;
             margin-bottom: 15px;
+            width: 100%;
+            min-height: 300px;
         `;
+        
+        // Calculate responsive dimensions
+        const containerWidth = document.querySelector('.visualization').offsetWidth - 60; // Account for padding
+        const barWidth = Math.max(Math.min(containerWidth / units - 2, 40), 8); // Responsive bar width
+        const chartHeight = Math.max(250, Math.min(400, window.innerHeight * 0.3)); // Responsive height
         
         const barsContainer = document.createElement('div');
         barsContainer.style.cssText = `
             display: flex;
             align-items: flex-end;
-            justify-content: flex-start;
-            height: 200px;
-            min-width: ${Math.min(units * 12, 1200)}px;
+            justify-content: center;
+            height: ${chartHeight}px;
+            width: 100%;
             position: relative;
-            gap: 1px;
+            gap: 2px;
+            margin: 0 auto;
         `;
         
         // Add guide lines
@@ -1217,11 +1225,12 @@ async function displayFeatureMaps(featureMaps, layer) {
                 position: absolute;
                 right: 5px;
                 top: -8px;
-                font-size: 10px;
+                font-size: 12px;
                 color: rgba(255, 255, 255, 0.7);
                 background: rgba(0, 0, 0, 0.5);
-                padding: 2px 4px;
-                border-radius: 2px;
+                padding: 3px 6px;
+                border-radius: 3px;
+                font-weight: bold;
             `;
             label.textContent = (percent / 100).toFixed(2);
             guideLine.appendChild(label);
@@ -1229,13 +1238,13 @@ async function displayFeatureMaps(featureMaps, layer) {
         }
         
         // Determine how many units to show
-        const maxUnitsToShow = Math.min(units, 100);
+        const maxUnitsToShow = Math.min(units, 50); // Increased limit for better display
         
         // Create bars
         for (let i = 0; i < maxUnitsToShow; i++) {
             const value = data[i];
             const normalized = range > 0 ? Math.max(0, Math.min(1, (value - min) / range)) : 0;
-            const barHeight = Math.max(normalized * 180, 2);
+            const barHeight = Math.max(normalized * (chartHeight - 40), 3); // Use responsive height
             
             const barWrapper = document.createElement('div');
             barWrapper.style.cssText = `
@@ -1244,22 +1253,22 @@ async function displayFeatureMaps(featureMaps, layer) {
                 flex-direction: column;
                 align-items: center;
                 justify-content: flex-end;
-                width: 10px;
+                width: ${barWidth}px;
                 height: 100%;
-                margin-right: 1px;
+                margin-right: 2px;
             `;
             
             const bar = document.createElement('div');
             const hue = Math.floor((1 - normalized) * 240); // Blue to red scale
             bar.style.cssText = `
-                width: 8px;
+                width: ${Math.max(barWidth - 4, 6)}px;
                 height: ${barHeight}px;
                 background: linear-gradient(to top, hsl(${hue}, 70%, 45%), hsl(${hue}, 70%, 65%));
-                border-radius: 2px 2px 0 0;
+                border-radius: 3px 3px 0 0;
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 transition: all 0.2s ease;
                 cursor: pointer;
-                box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
             `;
             
             // Tooltip
@@ -1271,15 +1280,16 @@ async function displayFeatureMaps(featureMaps, layer) {
                 transform: translateX(-50%);
                 background: rgba(0, 0, 0, 0.9);
                 color: white;
-                padding: 5px 8px;
-                border-radius: 4px;
-                font-size: 11px;
+                padding: 6px 10px;
+                border-radius: 5px;
+                font-size: 12px;
                 white-space: nowrap;
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.3s ease;
                 z-index: 1000;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
+                font-weight: bold;
             `;
             tooltip.textContent = `Unit ${i + 1}: ${value.toFixed(4)}`;
             
@@ -1287,12 +1297,12 @@ async function displayFeatureMaps(featureMaps, layer) {
             const label = document.createElement('div');
             label.style.cssText = `
                 position: absolute;
-                bottom: -20px;
-                font-size: 8px;
+                bottom: -25px;
+                font-size: ${Math.max(Math.min(barWidth * 0.8, 12), 8)}px;
                 color: rgba(255, 255, 255, 0.8);
                 font-weight: bold;
                 text-align: center;
-                width: 20px;
+                width: ${barWidth + 10}px;
                 left: 50%;
                 transform: translateX(-50%) rotate(-45deg);
                 transform-origin: center;
