@@ -1181,12 +1181,12 @@ async function displayFeatureMaps(featureMaps, layer) {
         barsWrapper.style.cssText = `
             background: rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            padding: 20px;
+            padding: 20px 20px 40px 20px;
             position: relative;
             overflow-x: auto;
             margin-bottom: 15px;
             width: 100%;
-            min-height: 300px;
+            min-height: 350px;
         `;
         
         // Calculate responsive dimensions
@@ -1203,7 +1203,7 @@ async function displayFeatureMaps(featureMaps, layer) {
             width: 100%;
             position: relative;
             gap: 2px;
-            margin: 0 auto;
+            margin: 0 auto 30px auto;
         `;
         
         // Add guide lines
@@ -1297,15 +1297,18 @@ async function displayFeatureMaps(featureMaps, layer) {
             const label = document.createElement('div');
             label.style.cssText = `
                 position: absolute;
-                bottom: -25px;
-                font-size: ${Math.max(Math.min(barWidth * 0.8, 12), 8)}px;
-                color: rgba(255, 255, 255, 0.8);
+                bottom: -35px;
+                font-size: ${Math.max(Math.min(barWidth * 0.7, 14), 10)}px;
+                color: white;
                 font-weight: bold;
                 text-align: center;
                 width: ${barWidth + 10}px;
                 left: 50%;
-                transform: translateX(-50%) rotate(-45deg);
-                transform-origin: center;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.7);
+                padding: 2px 4px;
+                border-radius: 3px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
             `;
             label.textContent = i + 1;
             
@@ -1314,12 +1317,16 @@ async function displayFeatureMaps(featureMaps, layer) {
                 tooltip.style.opacity = '1';
                 bar.style.transform = 'scaleX(1.5)';
                 bar.style.filter = 'brightness(1.2)';
+                label.style.background = 'rgba(33, 150, 243, 0.9)';
+                label.style.color = 'white';
             });
             
             barWrapper.addEventListener('mouseleave', () => {
                 tooltip.style.opacity = '0';
                 bar.style.transform = 'scaleX(1)';
                 bar.style.filter = 'brightness(1)';
+                label.style.background = 'rgba(0, 0, 0, 0.7)';
+                label.style.color = 'white';
             });
             
             barWrapper.appendChild(bar);
