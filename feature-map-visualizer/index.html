@@ -243,7 +243,12 @@
             <div class="controls">
                 <div class="control-group">
                     <button id="loadDemoBtn" class="btn" onclick="loadDemoModel()">🚀 Load Demo CNN Model</button>
-                    <button id="loadCustomBtn" class="btn" disabled>📁 Load Custom Model</button>
+                    <button id="loadCustomBtn" class="btn" onclick="loadCustomModel()">📁 Load Custom Model</button>
+                    <input type="file" id="modelFileInput" style="display: none;" accept=".json,.h5" multiple>
+                </div>
+                <div class="control-group">
+                    <button id="loadCustomImageBtn" class="btn" onclick="loadCustomImageFile()" style="display: none;">🖼️ Load Custom Image</button>
+                    <input type="file" id="imageFileInput" style="display: none;" accept="image/*">
                 </div>
                 <div id="status" class="status"></div>
             </div>

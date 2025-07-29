@@ -36,11 +36,11 @@ window.addEventListener('load', async function() {
 
 function initializeApp() {
     // Set up file input event listeners
-    const modelFileInput = document.getElementById('modelFileInput');
-    const imageFileInput = document.getElementById('imageFileInput');
+    const modelFileInput = document.getElementById('model-file');
+    const imageFileInput = document.getElementById('image-file');
     
     if (modelFileInput) {
-        modelFileInput.addEventListener('change', handleCustomModelFiles);
+        modelFileInput.addEventListener('change', loadCustomModel);
     }
     
     if (imageFileInput) {
@@ -66,10 +66,7 @@ function cleanupResources() {
             console.log('Input image disposed');
         }
         // Clean up TensorFlow.js memory
-        if (typeof tf !== 'undefined') {
-            tf.disposeVariables();
-            console.log('TensorFlow.js variables disposed');
-        }
+        tf.engine().endScope();
     } catch (e) {
         console.warn('Error during cleanup:', e.message);
     }
@@ -77,8 +74,6 @@ function cleanupResources() {
 
 // Create a demo CNN model
 async function createDemoModel() {
-    await tf.ready();
-    
     const demoModel = tf.sequential({
         layers: [
             tf.layers.conv2d({
@@ -127,6 +122,163 @@ async function createDemoModel() {
     return demoModel;
 }
 
+// Create model from configuration (for custom models)
+function createModelFromConfig(config) {
+    try {
+        const modelLayers = [];
+        let isFirstLayer = true;
+        
+        for (const layerConfig of config.layers) {
+            let layer;
+            
+            switch (layerConfig.type) {
+                case "Conv2D":
+                    const conv2dOptions = {
+                        filters: layerConfig.filters,
+                        kernelSize: layerConfig.kernelSize,
+                        strides: layerConfig.strides || [1, 1],
+                        padding: layerConfig.padding || 'valid',
+                        activation: layerConfig.activation || 'linear',
+                        name: layerConfig.name || `conv2d_${modelLayers.length + 1}`
+                    };
+                    
+                    if (isFirstLayer) {
+                        conv2dOptions.inputShape = layerConfig.inputShape || [28, 28, 1];
+                        isFirstLayer = false;
+                    }
+                    
+                    layer = tf.layers.conv2d(conv2dOptions);
+                    break;
+                    
+                case "MaxPooling2D":
+                    layer = tf.layers.maxPooling2d({
+                        poolSize: layerConfig.poolSize || [2, 2],
+                        strides: layerConfig.strides,
+                        padding: layerConfig.padding || 'valid',
+                        name: layerConfig.name || `maxpooling2d_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                case "AveragePooling2D":
+                    layer = tf.layers.averagePooling2d({
+                        poolSize: layerConfig.poolSize || [2, 2],
+                        strides: layerConfig.strides,
+                        padding: layerConfig.padding || 'valid',
+                        name: layerConfig.name || `averagepooling2d_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                case "Flatten":
+                    layer = tf.layers.flatten({
+                        name: layerConfig.name || `flatten_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                case "Dense":
+                    layer = tf.layers.dense({
+                        units: layerConfig.units,
+                        activation: layerConfig.activation || 'linear',
+                        name: layerConfig.name || `dense_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                case "Dropout":
+                    layer = tf.layers.dropout({
+                        rate: layerConfig.rate || 0.5,
+                        name: layerConfig.name || `dropout_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                case "BatchNormalization":
+                    layer = tf.layers.batchNormalization({
+                        axis: layerConfig.axis || -1,
+                        name: layerConfig.name || `batchnorm_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                case "ReLU":
+                    layer = tf.layers.reLU({
+                        name: layerConfig.name || `relu_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                case "Softmax":
+                    layer = tf.layers.softmax({
+                        name: layerConfig.name || `softmax_${modelLayers.length + 1}`
+                    });
+                    break;
+                    
+                default:
+                    console.warn(`Unknown layer type: ${layerConfig.type}`);
+                    continue;
+            }
+            
+            if (layer) {
+                modelLayers.push(layer);
+            }
+        }
+        
+        if (modelLayers.length === 0) {
+            throw new Error('No valid layers found in configuration');
+        }
+        
+        // Create sequential model
+        const createdModel = tf.sequential({ layers: modelLayers });
+        
+        // Compile with training settings
+        createdModel.compile({
+            optimizer: config.trainingSettings.optimizer || 'adam',
+            loss: 'categoricalCrossentropy',
+            metrics: ['accuracy']
+        });
+        
+        return createdModel;
+        
+    } catch (error) {
+        console.error('Error creating model from config:', error);
+        return null;
+    }
+}
+
+// Load weights into model from exported weights data
+async function loadModelWeights(model, weightsData) {
+    try {
+        if (!weightsData || !weightsData.layerWeights) {
+            throw new Error('Invalid weights data structure');
+        }
+        
+        // Map exported weights to model layers
+        for (let i = 0; i < weightsData.layerWeights.length && i < model.layers.length; i++) {
+            const layerWeights = weightsData.layerWeights[i];
+            const modelLayer = model.layers[i];
+            
+            if (layerWeights.weights && layerWeights.weights.length > 0) {
+                try {
+                    // Convert weight arrays back to tensors
+                    const weightTensors = layerWeights.weights.map(weight => {
+                        return tf.tensor(weight.values, weight.shape);
+                    });
+                    
+                    // Set weights on the layer
+                    modelLayer.setWeights(weightTensors);
+                    
+                    // Clean up temporary tensors
+                    weightTensors.forEach(tensor => tensor.dispose());
+                    
+                } catch (layerError) {
+                    console.warn(`Could not load weights for layer ${i} (${modelLayer.name}):`, layerError.message);
+                }
+            }
+        }
+        
+        console.log('Model weights loaded successfully');
+        
+    } catch (error) {
+        console.error('Error loading model weights:', error);
+        throw error;
+    }
+}
+
 // Generate a demo image (28x28 with some patterns)
 function generateDemoImage() {
     const imageData = new Float32Array(28 * 28);
@@ -157,14 +309,7 @@ function generateDemoImage() {
 // Load demo model - GLOBAL function for onclick
 async function loadDemoModel() {
     try {
-        // Check if TensorFlow.js is available
-        if (typeof tf === 'undefined') {
-            showStatus('❌ TensorFlow.js not loaded. Please wait and try again.');
-            return;
-        }
-        
         showStatus('Creating demo CNN model...', true);
-        console.log('Starting model creation...');
         
         // Clean up existing model
         if (model && !model.isDisposedInternal) {
@@ -175,10 +320,120 @@ async function loadDemoModel() {
             }
         }
         
+        // Wait for TensorFlow.js to be ready
+        await tf.ready();
+        console.log('TensorFlow.js backend:', tf.getBackend());
+        
         model = await createDemoModel();
-        console.log('Model created successfully');
         
         // Extract layer information with error handling
+        layers = model.layers.map((layer, index) => {
+            try {
+                return {
+                    name: layer.name,
+                    index,
+                    shape: layer.outputShape,
+                    type: layer.getClassName()
+                };
+            } catch (e) {
+                console.warn(`Error processing layer ${index}:`, e);
+                return {
+                    name: `layer_${index}`,
+                    index,
+                    shape: null,
+                    type: 'Unknown'
+                };
+            }
+        });
+        
+        displayModelInfo();
+        displayLayers();
+        
+        // Enable image loading buttons
+        const demoImageBtn = document.getElementById('loadDemoImageBtn');
+        const customImageBtn = document.getElementById('loadCustomImageBtn');
+        
+        if (demoImageBtn) demoImageBtn.disabled = false;
+        if (customImageBtn) customImageBtn.disabled = false;
+        
+        showStatus('Demo model loaded successfully! Now load an image.');
+        
+    } catch (error) {
+        console.error('Error loading demo model:', error);
+        showStatus('Error loading demo model: ' + error.message);
+        
+        // Clean up on error
+        if (model && !model.isDisposedInternal) {
+            try {
+                model.dispose();
+            } catch (e) {
+                console.warn('Error disposing model after failure:', e.message);
+            }
+        }
+        model = null;
+    }
+}
+
+// Load custom model from file
+async function loadCustomModel(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+        showStatus('Loading custom model...', true);
+        
+        // Clean up existing model
+        if (model && !model.isDisposedInternal) {
+            try {
+                model.dispose();
+            } catch (e) {
+                console.warn('Model already disposed:', e.message);
+            }
+        }
+        
+        // Read and parse the model configuration file
+        const text = await file.text();
+        const config = JSON.parse(text);
+        
+        // Validate the config structure
+        if (!config.layers || !Array.isArray(config.layers)) {
+            showStatus('❌ Invalid model file: Missing layers array');
+            return;
+        }
+        
+        if (!config.trainingSettings) {
+            showStatus('❌ Invalid model file: Missing training settings');
+            return;
+        }
+        
+        // Validate layer types
+        const validLayerTypes = ['Conv2D', 'ReLU', 'MaxPooling2D', 'BatchNormalization', 'Dropout', 'Flatten', 'Dense', 'Softmax'];
+        const invalidLayers = config.layers.filter(layer => !validLayerTypes.includes(layer.type));
+        
+        if (invalidLayers.length > 0) {
+            showStatus(`❌ Invalid layer types: ${invalidLayers.map(l => l.type).join(', ')}`);
+            return;
+        }
+        
+        // Create TensorFlow.js model from configuration
+        model = createModelFromConfig(config);
+        
+        if (!model) {
+            showStatus('❌ Failed to create model from configuration');
+            return;
+        }
+        
+        // If weights are included, try to load them
+        if (config.weights && config.weights.layerWeights) {
+            try {
+                await loadModelWeights(model, config.weights);
+                console.log('✅ Model weights loaded successfully');
+            } catch (error) {
+                console.warn('⚠️ Could not load weights, using random initialization:', error.message);
+            }
+        }
+        
+        // Extract layer information
         layers = model.layers.map((layer, index) => {
             try {
                 return {
@@ -203,145 +458,19 @@ async function loadDemoModel() {
         displayModelInfo();
         displayLayers();
         
-        // Show image loading options
-        showImageLoadingOptions();
+        // Enable image loading buttons
+        const demoImageBtn = document.getElementById('loadDemoImageBtn');
+        const customImageBtn = document.getElementById('loadCustomImageBtn');
         
-        showStatus('Demo model loaded successfully! Now load an image.');
-        console.log('Model loading completed successfully');
+        if (demoImageBtn) demoImageBtn.disabled = false;
+        if (customImageBtn) customImageBtn.disabled = false;
         
-    } catch (error) {
-        console.error('Error loading demo model:', error);
-        showStatus('Error loading demo model: ' + error.message);
+        // Show success message with model details
+        const modelInfo = config.metadata ? 
+            `${config.metadata.description || 'Custom model'}` : 
+            `Custom model with ${config.layers.length} layers`;
         
-        // Clean up on error
-        if (model && !model.isDisposedInternal) {
-            try {
-                model.dispose();
-            } catch (e) {
-                console.warn('Error disposing model after failure:', e.message);
-            }
-        }
-        model = null;
-    }
-}
-
-// Load custom model from file
-function loadCustomModel() {
-    const fileInput = document.getElementById('modelFileInput');
-    if (!fileInput) {
-        console.error('File input not found');
-        return;
-    }
-    
-    fileInput.onchange = handleCustomModelFiles;
-    fileInput.click();
-}
-
-async function handleCustomModelFiles(event) {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
-    
-    try {
-        showStatus('Loading custom model...', true);
-        
-        // Clean up existing model
-        if (model && !model.isDisposedInternal) {
-            try {
-                model.dispose();
-            } catch (e) {
-                console.warn('Model already disposed:', e.message);
-            }
-        }
-        
-        // Check if we have both model.json and weights file(s)
-        const modelJsonFile = files.find(f => f.name.endsWith('.json'));
-        const weightsFiles = files.filter(f => f.name.includes('.bin') || f.name.endsWith('.h5'));
-        
-        if (!modelJsonFile) {
-            showStatus('❌ Please select a model.json file');
-            return;
-        }
-        
-        if (weightsFiles.length === 0) {
-            // Try to load as a single .h5 file or standalone model.json
-            try {
-                // For .h5 files, use tf.loadLayersModel with file object
-                if (files.length === 1 && files[0].name.endsWith('.h5')) {
-                    const fileUrl = URL.createObjectURL(files[0]);
-                    model = await tf.loadLayersModel(fileUrl);
-                    URL.revokeObjectURL(fileUrl);
-                } else {
-                    // For model.json without weights, try to load it anyway
-                    const modelText = await modelJsonFile.text();
-                    const modelConfig = JSON.parse(modelText);
-                    
-                    // Create model from config (weights will be random)
-                    model = await tf.models.modelFromJSON(modelConfig);
-                    showStatus('⚠️ Model loaded without weights (random initialization)', false);
-                }
-            } catch (error) {
-                showStatus('❌ Error: Need both model.json and weight files for complete model');
-                return;
-            }
-        } else {
-            // Load model with weights
-            try {
-                // Create URLs for all files
-                const modelUrl = URL.createObjectURL(modelJsonFile);
-                const weightsUrls = weightsFiles.map(f => URL.createObjectURL(f));
-                
-                // Create a handler that provides the weight files
-                const weightPathPrefix = weightsUrls[0].split('/').slice(0, -1).join('/') + '/';
-                
-                model = await tf.loadLayersModel(modelUrl, {
-                    onProgress: (fraction) => {
-                        showStatus(`Loading model... ${Math.round(fraction * 100)}%`, true);
-                    }
-                });
-                
-                // Clean up URLs
-                URL.revokeObjectURL(modelUrl);
-                weightsUrls.forEach(url => URL.revokeObjectURL(url));
-                
-            } catch (error) {
-                showStatus('❌ Error loading model with weights. Try loading as .h5 file or check file compatibility.');
-                console.error('Model loading error:', error);
-                return;
-            }
-        }
-        
-        // Extract layer information
-        layers = model.layers.map((layer, index) => {
-            try {
-                return {
-                    name: layer.name || `layer_${index}`,
-                    index,
-                    shape: layer.outputShape,
-                    type: layer.getClassName()
-                };
-            } catch (e) {
-                console.warn(`Error processing layer ${index}:`, e);
-                return {
-                    name: `layer_${index}`,
-                    index,
-                    shape: null,
-                    type: 'Unknown'
-                };
-            }
-        });
-        
-        console.log('Custom model layers:', layers);
-        
-        displayModelInfo();
-        displayLayers();
-        
-        showStatus('✅ Custom model loaded successfully! Load an image to visualize.');
-        
-        // Show image loading options
-        showImageLoadingOptions();
-        
-        // Reset file input
-        event.target.value = '';
+        showStatus(`✅ ${modelInfo} loaded successfully! Now load an image.`);
         
     } catch (error) {
         console.error('Error loading custom model:', error);
@@ -356,9 +485,6 @@ async function handleCustomModelFiles(event) {
             }
         }
         model = null;
-        
-        // Reset file input
-        event.target.value = '';
     }
 }
 
@@ -402,84 +528,46 @@ async function loadDemoImage() {
     }
 }
 
-// Show image loading options after model is loaded
-function showImageLoadingOptions() {
-    // Add demo image button
-    const loadDemoBtn = document.getElementById('loadDemoBtn');
-    if (loadDemoBtn && !document.getElementById('demoImageBtn')) {
-        const demoImageBtn = document.createElement('button');
-        demoImageBtn.id = 'demoImageBtn';
-        demoImageBtn.className = 'btn';
-        demoImageBtn.textContent = '🖼️ Load Demo Image';
-        demoImageBtn.onclick = loadDemoImage;
-        demoImageBtn.style.marginLeft = '10px';
-        loadDemoBtn.parentNode.appendChild(demoImageBtn);
-    }
-    
-    // Show custom image button
-    const customImageBtn = document.getElementById('loadCustomImageBtn');
-    if (customImageBtn) {
-        customImageBtn.style.display = 'inline-block';
-    }
-}
-
-// Load custom image file
-function loadCustomImageFile() {
-    const fileInput = document.getElementById('imageFileInput');
-    if (!fileInput) {
-        console.error('Image file input not found');
-        return;
-    }
-    
-    fileInput.click();
-}
-
 // Load custom image from file
 async function loadCustomImage(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    if (!model) {
-        showStatus('❌ Please load a model first');
-        return;
-    }
-    
     try {
-        showStatus('Processing image...', true);
+        showStatus('Processing custom image...', true);
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showStatus('❌ Please select a valid image file');
+            return;
+        }
         
         const img = new Image();
-        img.onload = function() {
+        img.onload = async function() {
             try {
-                // Get expected input shape from model
-                const inputShape = model.layers[0].batchInputShape;
-                const height = inputShape[1] || 28;
-                const width = inputShape[2] || 28;
-                const channels = inputShape[3] || 1;
-                
                 // Create canvas to process the image
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Resize to expected dimensions
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
+                // Resize to 28x28 and convert to grayscale
+                canvas.width = 28;
+                canvas.height = 28;
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, 28, 28);
                 
-                // Convert to tensor based on expected channels
-                let tensor;
-                if (channels === 1) {
-                    // Grayscale
-                    tensor = tf.browser.fromPixels(canvas, 1);
-                } else if (channels === 3) {
-                    // RGB
-                    tensor = tf.browser.fromPixels(canvas, 3);
-                } else {
-                    // Default to grayscale
-                    tensor = tf.browser.fromPixels(canvas, 1);
-                }
+                // Scale and center the image
+                const scale = Math.min(28 / img.width, 28 / img.height);
+                const scaledWidth = img.width * scale;
+                const scaledHeight = img.height * scale;
+                const x = (28 - scaledWidth) / 2;
+                const y = (28 - scaledHeight) / 2;
                 
-                const normalized = tensor.div(255.0);
-                const batched = normalized.expandDims(0);
+                ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                
+                // Convert to tensor format expected by the model
+                const tensor = tf.browser.fromPixels(canvas, 1); // Grayscale
+                const normalized = tensor.div(255.0); // Normalize to [0, 1]
+                const batched = normalized.expandDims(0); // Add batch dimension
                 
                 // Clean up existing image
                 if (inputImage && !inputImage.isDisposed) {
@@ -491,21 +579,41 @@ async function loadCustomImage(event) {
                 }
                 
                 inputImage = batched;
+                
+                // Clean up intermediate tensors
                 tensor.dispose();
                 normalized.dispose();
                 
                 // Display the processed image
-                displayInputImage();
+                await displayInputImage();
                 
                 // Update layer list to enable selection
                 displayLayers();
                 
-                showStatus(`✅ Image loaded! (${width}x${height}x${channels}) Select a layer to visualize.`);
+                // Show image details
+                const fileSize = (file.size / 1024).toFixed(1);
+                const originalDimensions = `${img.width}×${img.height}`;
                 
-            } catch (error) {
-                console.error('Error processing image:', error);
-                showStatus('❌ Error processing image: ' + error.message);
+                showStatus(`✅ Custom image loaded! Original: ${originalDimensions}, Size: ${fileSize}KB. Select a layer to visualize.`);
+                
+            } catch (processingError) {
+                console.error('Error processing image:', processingError);
+                showStatus('❌ Error processing image: ' + processingError.message);
+                
+                // Clean up on error
+                if (inputImage && !inputImage.isDisposed) {
+                    try {
+                        inputImage.dispose();
+                    } catch (e) {
+                        console.warn('Error disposing input image after failure:', e.message);
+                    }
+                }
+                inputImage = null;
             }
+        };
+        
+        img.onerror = function() {
+            showStatus('❌ Failed to load image. Please try a different image file.');
         };
         
         img.src = URL.createObjectURL(file);
@@ -521,12 +629,35 @@ function displayModelInfo() {
     const modelInfo = document.getElementById('model-info');
     if (modelInfo) {
         modelInfo.style.display = 'block';
+        
+        // Check if this is a custom model (has more complex structure)
+        const isCustomModel = model.layers.length > 7 || 
+                             model.layers.some(layer => layer.getClassName() === 'BatchNormalization');
+        
+        const modelType = isCustomModel ? 'Custom CNN' : 'Demo CNN';
+        const inputShapeStr = model.inputs[0].shape.slice(1).join(' × ');
+        
+        // Count parameters
+        let totalParams = 0;
+        model.layers.forEach(layer => {
+            const weights = layer.getWeights();
+            weights.forEach(weight => {
+                totalParams += weight.size;
+            });
+        });
+        
+        // Get layer types
+        const layerTypes = [...new Set(model.layers.map(layer => layer.getClassName()))];
+        
         modelInfo.innerHTML = `
             <div class="model-info">
-                <h3>✅ Model Loaded Successfully!</h3>
-                <p><strong>Layers:</strong> ${layers.length}</p>
-                <p><strong>Input Shape:</strong> ${model.inputs[0].shape.slice(1).join(' × ')}</p>
-                <p><strong>Type:</strong> Sequential CNN</p>
+                <h3>✅ ${modelType} Loaded</h3>
+                <div style="font-size: 0.9rem; color: #bbb; margin-top: 0.5rem;">
+                    <div><strong>📐 Layers:</strong> ${model.layers.length}</div>
+                    <div><strong>🔢 Parameters:</strong> ${totalParams.toLocaleString()}</div>
+                    <div><strong>📏 Input Shape:</strong> ${inputShapeStr}</div>
+                    <div><strong>🏗️ Types:</strong> ${layerTypes.join(', ')}</div>
+                </div>
             </div>
         `;
     }
@@ -534,11 +665,11 @@ function displayModelInfo() {
 
 // Display layer list
 function displayLayers() {
-    const layerList = document.getElementById('layerList');
+    const layerList = document.getElementById('layer-list');
     if (!layerList) return;
     
     if (!layers || layers.length === 0) {
-        layerList.innerHTML = '<li class="empty-state"><div class="icon">🧠</div><p>Load a model first</p></li>';
+        layerList.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">Load a model first</p>';
         return;
     }
     
@@ -547,7 +678,7 @@ function displayLayers() {
     );
     
     if (visualizableLayers.length === 0) {
-        layerList.innerHTML = '<li class="empty-state"><p style="color: #ff6b6b;">No visualizable layers found</p></li>';
+        layerList.innerHTML = '<p style="text-align: center; padding: 20px; color: #ff6b6b;">No visualizable layers found</p>';
         return;
     }
     
@@ -556,17 +687,27 @@ function displayLayers() {
         const shapeText = Array.isArray(layer.shape) ? layer.shape.slice(1).join(' × ') : 'N/A';
         
         return `
-            <li class="layer-item ${isDisabled ? 'disabled' : ''}" 
+            <div class="layer-item ${isDisabled ? 'disabled' : ''}" 
                  onclick="${!isDisabled ? `selectLayer(${layer.index})` : ''}"
-                 id="layer-${layer.index}">
+                 id="layer-${layer.index}"
+                 style="
+                     padding: 15px;
+                     margin: 5px 0;
+                     background: ${isDisabled ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'};
+                     border-radius: 8px;
+                     border: 1px solid rgba(255,255,255,0.2);
+                     cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
+                     transition: all 0.2s ease;
+                     opacity: ${isDisabled ? '0.5' : '1'};
+                 ">
                 <div style="font-weight: 600; color: #2196F3; font-size: 1.1rem; margin-bottom: 5px;">
                     ${layer.name}
                 </div>
-                <div style="font-size: 0.9rem; opacity: 0.8;">
+                <div style="font-size: 0.9rem; opacity: 0.8; color: rgba(255,255,255,0.8);">
                     Type: ${layer.type} | Shape: ${shapeText}
                 </div>
                 ${isDisabled ? '<div style="font-size: 0.8rem; color: #ff6b6b; margin-top: 5px;">Load an image first</div>' : ''}
-            </li>
+            </div>
         `;
     }).join('');
     
@@ -632,6 +773,10 @@ async function selectLayer(layerIndex) {
     } catch (error) {
         console.error('Error generating feature maps:', error);
         showStatus('Error generating feature maps: ' + error.message);
+        
+        // Clean up any tensors that might have been created
+        tf.engine().endScope();
+        tf.engine().startScope();
     }
 }
 
@@ -703,7 +848,7 @@ async function displayInputImage() {
 
 // Display feature maps
 async function displayFeatureMaps(featureMaps, layer) {
-    const visualizationContent = document.getElementById('visualizationContent');
+    const visualizationContent = document.getElementById('visualization-content');
     if (!visualizationContent) return;
     
     // Get feature map data
@@ -727,11 +872,42 @@ async function displayFeatureMaps(featureMaps, layer) {
         border: 1px solid rgba(33, 150, 243, 0.3);
         box-shadow: 0 8px 25px rgba(33, 150, 243, 0.15);
     `;
-    layerInfo.innerHTML = `
-        <h3 style="color: #2d3748; font-size: 2rem; margin-bottom: 15px; text-shadow: none; font-weight: 600;">${layer.name} (${layer.getClassName()})</h3>
-        <p style="font-size: 1.2rem; margin: 10px 0; color: #4a5568;"><strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}</p>
-        <p style="font-size: 1.2rem; margin: 10px 0; color: #4a5568;"><strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}</p>
+    
+    // Create elements manually for better text rendering control
+    const title = document.createElement('h3');
+    title.textContent = `${layer.name} (${layer.getClassName()})`;
+    title.style.cssText = `
+        color: #64B5F6; 
+        font-size: 2rem; 
+        margin-bottom: 15px; 
+        font-family: monospace, 'Courier New', Courier;
+        font-weight: bold;
+        letter-spacing: 0.5px;
     `;
+    
+    const outputShape = document.createElement('p');
+    outputShape.innerHTML = `<strong>Output Shape:</strong> ${shape.slice(1).join(' × ')}`;
+    outputShape.style.cssText = `
+        font-size: 1.2rem; 
+        margin: 10px 0; 
+        color: rgba(255, 255, 255, 0.9);
+        font-family: monospace, 'Courier New', Courier;
+        letter-spacing: 0.5px;
+    `;
+    
+    const activationRange = document.createElement('p');
+    activationRange.innerHTML = `<strong>Activation Range:</strong> ${Math.min(...data).toFixed(3)} to ${Math.max(...data).toFixed(3)}`;
+    activationRange.style.cssText = `
+        font-size: 1.2rem; 
+        margin: 10px 0; 
+        color: rgba(255, 255, 255, 0.9);
+        font-family: monospace, 'Courier New', Courier;
+        letter-spacing: 0.5px;
+    `;
+    
+    layerInfo.appendChild(title);
+    layerInfo.appendChild(outputShape);
+    layerInfo.appendChild(activationRange);
     visualizationContent.appendChild(layerInfo);
     
     if (shape.length === 4) {
@@ -754,17 +930,13 @@ async function displayFeatureMaps(featureMaps, layer) {
             item.className = 'feature-map-item';
             
             const canvas = document.createElement('canvas');
-            const displaySize = Math.max(height * 12, 180); // Larger display size for better visibility
+            const displaySize = Math.max(height * 10, 180); // Even larger display size for clarity
             canvas.width = displaySize;
             canvas.height = displaySize;
-            canvas.className = 'feature-map-canvas';
+            canvas.className = 'feature-map-canvas crisp-render';
             canvas.style.imageRendering = 'pixelated';
             
             const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingEnabled = false;
-            ctx.mozImageSmoothingEnabled = false;
-            ctx.webkitImageSmoothingEnabled = false;
-            ctx.msImageSmoothingEnabled = false;
             
             // Extract feature map data for this channel
             const mapData = new Float32Array(height * width);
@@ -786,6 +958,7 @@ async function displayFeatureMaps(featureMaps, layer) {
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = width;
             tempCanvas.height = height;
+            tempCanvas.style.imageRendering = 'pixelated';
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.imageSmoothingEnabled = false;
             tempCtx.mozImageSmoothingEnabled = false;
@@ -807,13 +980,33 @@ async function displayFeatureMaps(featureMaps, layer) {
             
             tempCtx.putImageData(imageData, 0, 0);
             
-            // Scale up for display with pixel-perfect rendering
+            // Scale up for display with ULTRA pixel-perfect rendering
             ctx.imageSmoothingEnabled = false;
             ctx.mozImageSmoothingEnabled = false;
             ctx.webkitImageSmoothingEnabled = false;
             ctx.msImageSmoothingEnabled = false;
-            ctx.drawImage(tempCanvas, 0, 0, displaySize, displaySize);
             
+            // Apply special rendering technique for ultra-crisp feature maps
+            // First clear canvas with solid black
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, displaySize, displaySize);
+            
+            // Draw at integer scale factors for perfect pixel alignment
+            const scale = Math.floor(displaySize / width);
+            const scaledWidth = width * scale;
+            const scaledHeight = height * scale;
+            
+            // Center the scaled image
+            const offsetX = Math.floor((displaySize - scaledWidth) / 2);
+            const offsetY = Math.floor((displaySize - scaledHeight) / 2);
+            
+            // Draw the image with perfect pixel alignment
+            ctx.drawImage(tempCanvas, offsetX, offsetY, scaledWidth, scaledHeight);
+            
+            // Add a subtle border to each pixel for enhanced visibility
+            canvas.classList.add('crisp-render');
+            
+            // Create filter label with crisp text rendering
             const label = document.createElement('div');
             label.textContent = `Filter ${c + 1}`;
             label.className = 'feature-map-label';
@@ -851,11 +1044,11 @@ async function displayFeatureMaps(featureMaps, layer) {
         const title = document.createElement('h3');
         title.textContent = `Dense Layer Activations (${units} units)`;
         title.style.cssText = `
-            color: #2d3748;
+            color: #64B5F6;
             font-size: 1.6rem;
             margin-bottom: 20px;
             text-align: center;
-            font-weight: 600;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         `;
         container.appendChild(title);
         
@@ -1056,28 +1249,52 @@ async function displayFeatureMaps(featureMaps, layer) {
 
 // Show status message
 function showStatus(message, loading = false) {
-    const status = document.getElementById('status');
-    if (!status) return;
+    const visualizationContent = document.getElementById('visualization-content');
+    if (!visualizationContent) return;
     
-    status.className = 'status show';
+    console.log('Status:', message);
     
     if (loading) {
-        status.className += ' loading';
-        status.innerHTML = `<span class="loading-spinner"></span>${message}`;
-    } else if (message.includes('Error') || message.includes('❌')) {
-        status.className += ' error';
-        status.innerHTML = message;
-    } else if (message.includes('✅') || message.includes('success')) {
-        status.className += ' success';
-        status.innerHTML = message;
+        visualizationContent.innerHTML = `
+            <div class="loading" style="
+                text-align: center;
+                padding: 40px;
+                color: #64B5F6;
+            ">
+                <div class="spinner" style="
+                    border: 3px solid rgba(100, 181, 246, 0.3);
+                    border-top: 3px solid #64B5F6;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 15px;
+                "></div>
+                <p style="font-size: 1.1rem; font-weight: 500;">${message}</p>
+            </div>
+        `;
     } else {
-        status.innerHTML = message;
-    }
-    
-    // Hide after 5 seconds if not loading
-    if (!loading) {
-        setTimeout(() => {
-            status.className = 'status';
-        }, 5000);
+        // Only show non-loading messages if we're not in the middle of visualization
+        const hasVisualization = visualizationContent.innerHTML.includes('feature-maps-container') || 
+                                 visualizationContent.innerHTML.includes('dense-layer-container');
+        
+        if (!hasVisualization) {
+            visualizationContent.innerHTML = `
+                <div class="status" style="
+                    text-align: center;
+                    padding: 40px;
+                    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
+                    border-radius: 15px;
+                    border: 1px solid rgba(33, 150, 243, 0.3);
+                ">
+                    <h3 style="color: #64B5F6; margin-bottom: 10px; font-size: 1.4rem;">${message}</h3>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 1rem;">
+                        ${message.includes('successfully') ? '✅ Operation completed!' : 
+                          message.includes('Error') ? '❌ Something went wrong.' : 
+                          '🔄 Ready for next step.'}
+                    </p>
+                </div>
+            `;
+        }
     }
 }
