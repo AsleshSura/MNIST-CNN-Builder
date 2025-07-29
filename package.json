@@ -4,12 +4,22 @@
   "description": "MNIST CNN Builder - Interactive CNN Architecture Builder and Visualizer",
   "private": true,
   "scripts": {
-    "deploy": "cd cnn-builder && npm run build && cd .. && cp -r cnn-builder/build/* docs/cnn-builder/"
+    "install-deps": "cd cnn-builder && npm install",
+    "build": "cd cnn-builder && npm run build",
+    "start": "cd cnn-builder && npm start",
+    "deploy:local": "npm run build && npm run start",
+    "deploy:pages": "npm run build && npm run copy-build",
+    "copy-build": "powershell -Command \"if (Test-Path 'docs/cnn-builder') { Remove-Item -Recurse -Force 'docs/cnn-builder' }; Copy-Item -Recurse 'cnn-builder/build' 'docs/cnn-builder'\"",
+    "deploy": "npm run deploy:pages"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/AsleshSura/MNIST-CNN-Builder.git"
   },
   "author": "AsleshSura",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
 }

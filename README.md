@@ -458,7 +458,53 @@ The platform has been tested against standard MNIST benchmarks:
 | 8GB | Modern | All features | Full functionality |
 | 16GB+ | High-end | Optimal | Research/batch experiments |
 
-## 📄 License & Citation
+## � Deployment & Distribution
+
+### Quick Deployment
+
+#### For Windows Users:
+```powershell
+# Local development
+.\deploy.ps1 -Local
+
+# Deploy to GitHub Pages
+.\deploy.ps1 -Pages
+```
+
+#### For Mac/Linux Users:
+```bash
+# Local development
+./deploy.sh local
+
+# Deploy to GitHub Pages  
+./deploy.sh pages
+```
+
+#### Using npm Scripts:
+```bash
+# Install and build
+npm run install-deps
+npm run build
+
+# Deploy to production
+npm run deploy
+```
+
+### Deployment Platforms
+
+| Platform | Effort | Features | Best For |
+|----------|--------|----------|-----------|
+| **GitHub Pages** | ⭐ | Free, Auto-deploy, CDN | Open source projects |
+| **Netlify** | ⭐⭐ | Free tier, Custom domains | Personal/small projects |
+| **Vercel** | ⭐⭐ | Fast builds, Edge CDN | Professional deployment |
+| **Firebase** | ⭐⭐⭐ | Full backend, Analytics | Feature-rich applications |
+
+### Live Demo
+🌐 **Visit the live application**: [https://asleshsura.github.io/MNIST-CNN-Builder/docs/](https://asleshsura.github.io/MNIST-CNN-Builder/docs/)
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## �📄 License & Citation
 
 ### License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

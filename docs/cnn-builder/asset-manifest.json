@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/MNIST-CNN-Builder/docs/cnn-builder/static/css/main.d49ab2e2.css",
-    "main.js": "/MNIST-CNN-Builder/docs/cnn-builder/static/js/main.b6386f72.js",
+    "main.js": "/MNIST-CNN-Builder/docs/cnn-builder/static/js/main.a385ac23.js",
     "static/js/453.a1fd2f30.chunk.js": "/MNIST-CNN-Builder/docs/cnn-builder/static/js/453.a1fd2f30.chunk.js",
     "index.html": "/MNIST-CNN-Builder/docs/cnn-builder/index.html",
     "main.d49ab2e2.css.map": "/MNIST-CNN-Builder/docs/cnn-builder/static/css/main.d49ab2e2.css.map",
-    "main.b6386f72.js.map": "/MNIST-CNN-Builder/docs/cnn-builder/static/js/main.b6386f72.js.map",
+    "main.a385ac23.js.map": "/MNIST-CNN-Builder/docs/cnn-builder/static/js/main.a385ac23.js.map",
     "453.a1fd2f30.chunk.js.map": "/MNIST-CNN-Builder/docs/cnn-builder/static/js/453.a1fd2f30.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.d49ab2e2.css",
-    "static/js/main.b6386f72.js"
+    "static/js/main.a385ac23.js"
   ]
 }
