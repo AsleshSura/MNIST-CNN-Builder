@@ -227,22 +227,261 @@ async function loadDemoModel() {
 
 // Load custom model from file
 function loadCustomModel() {
-    const fileInput = document.getElementById('modelFileInput');
-    if (!fileInput) {
-        console.error('File input not found');
+    console.log('loadCustomModel called');
+    
+    // Check if TensorFlow.js is available
+    if (typeof tf === 'undefined') {
+        showStatus('❌ TensorFlow.js not loaded. Please wait and try again.');
+        console.error('TensorFlow.js not available');
         return;
     }
     
+    const fileInput = document.getElementById('modelFileInput');
+    if (!fileInput) {
+        console.error('File input not found');
+        showStatus('❌ File input not found');
+        return;
+    }
+    
+    console.log('Opening file picker...');
     fileInput.onchange = handleCustomModelFiles;
     fileInput.click();
+}
+
+// Create and download a test model for testing custom model loading
+async function createTestModel() {
+    try {
+        showStatus('Creating test model...', true);
+        
+        // Check if TensorFlow.js is available
+        if (typeof tf === 'undefined') {
+            showStatus('❌ TensorFlow.js not loaded. Please wait and try again.');
+            return;
+        }
+        
+        // Create a simple test model
+        const testModel = tf.sequential({
+            layers: [
+                tf.layers.conv2d({
+                    inputShape: [32, 32, 3],
+                    filters: 16,
+                    kernelSize: 3,
+                    activation: 'relu',
+                    name: 'conv2d_test'
+                }),
+                tf.layers.maxPooling2d({
+                    poolSize: 2,
+                    name: 'maxpool_test'
+                }),
+                tf.layers.flatten({
+                    name: 'flatten_test'
+                }),
+                tf.layers.dense({
+                    units: 10,
+                    activation: 'softmax',
+                    name: 'output_test'
+                })
+            ]
+        });
+        
+        testModel.compile({
+            optimizer: 'adam',
+            loss: 'categoricalCrossentropy',
+            metrics: ['accuracy']
+        });
+        
+        // Save the model to downloads
+        const saveResult = await testModel.save('downloads://test-model');
+        
+        showStatus('✅ Test model created and downloaded! Check your Downloads folder for model.json and .bin files.');
+        
+        console.log('Test model created successfully:', saveResult);
+        
+    } catch (error) {
+        console.error('Error creating test model:', error);
+        showStatus('❌ Error creating test model: ' + error.message);
+    }
+}
+
+// Convert CNN-Builder format to TensorFlow.js model
+async function convertCNNBuilderToTensorFlow(cnnBuilderData) {
+    try {
+        console.log('Converting CNN-Builder data:', cnnBuilderData);
+        
+        if (!cnnBuilderData.layers || !Array.isArray(cnnBuilderData.layers)) {
+            throw new Error('Invalid CNN-Builder format: missing layers array');
+        }
+        
+        const model = tf.sequential();
+        let isFirstLayer = true;
+        
+        // Convert each layer from CNN-Builder format to TensorFlow.js
+        cnnBuilderData.layers.forEach((layer, index) => {
+            console.log(`Converting layer ${index}:`, layer);
+            
+            switch (layer.type) {
+                case "Conv2D":
+                    if (isFirstLayer) {
+                        // First layer needs input shape
+                        const inputShape = layer.inputShape || [28, 28, 1]; // Default to MNIST shape
+                        model.add(tf.layers.conv2d({
+                            filters: layer.filters,
+                            kernelSize: layer.kernelSize,
+                            strides: layer.strides,
+                            padding: layer.padding,
+                            activation: layer.activation,
+                            inputShape: inputShape,
+                            name: layer.name || `conv2d_${index}`
+                        }));
+                        isFirstLayer = false;
+                    } else {
+                        model.add(tf.layers.conv2d({
+                            filters: layer.filters,
+                            kernelSize: layer.kernelSize,
+                            strides: layer.strides,
+                            padding: layer.padding,
+                            activation: layer.activation,
+                            name: layer.name || `conv2d_${index}`
+                        }));
+                    }
+                    break;
+                    
+                case "ReLU":
+                    model.add(tf.layers.activation({ 
+                        activation: "relu",
+                        name: layer.name || `relu_${index}`
+                    }));
+                    break;
+                    
+                case "MaxPooling2D":
+                    model.add(tf.layers.maxPooling2d({
+                        poolSize: layer.poolSize,
+                        strides: layer.strides,
+                        padding: layer.padding,
+                        name: layer.name || `maxpool_${index}`
+                    }));
+                    break;
+                    
+                case "BatchNormalization":
+                    model.add(tf.layers.batchNormalization({
+                        name: layer.name || `batchnorm_${index}`
+                    }));
+                    break;
+                    
+                case "Dropout":
+                    model.add(tf.layers.dropout({
+                        rate: layer.rate,
+                        name: layer.name || `dropout_${index}`
+                    }));
+                    break;
+                    
+                case "Flatten":
+                    model.add(tf.layers.flatten({
+                        name: layer.name || `flatten_${index}`
+                    }));
+                    break;
+                    
+                case "Dense":
+                    model.add(tf.layers.dense({
+                        units: layer.units,
+                        activation: layer.activation,
+                        name: layer.name || `dense_${index}`
+                    }));
+                    break;
+                    
+                case "Softmax":
+                    model.add(tf.layers.activation({ 
+                        activation: "softmax",
+                        name: layer.name || `softmax_${index}`
+                    }));
+                    break;
+                    
+                default:
+                    console.warn(`Unknown layer type: ${layer.type}`);
+                    break;
+            }
+        });
+        
+        // Compile the model with default settings or from the config
+        const trainingSettings = cnnBuilderData.trainingSettings || {
+            optimizer: 'adam',
+            loss: 'categoricalCrossentropy',
+            metrics: ['accuracy']
+        };
+        
+        model.compile({
+            optimizer: trainingSettings.optimizer,
+            loss: trainingSettings.loss || "categoricalCrossentropy",
+            metrics: trainingSettings.metrics || ["accuracy"]
+        });
+        
+        // If weights are available, try to load them
+        if (cnnBuilderData.weights && cnnBuilderData.weights.layerWeights) {
+            try {
+                console.log('Loading weights from CNN-Builder format...');
+                await loadCNNBuilderWeights(model, cnnBuilderData.weights);
+                console.log('Weights loaded successfully');
+            } catch (error) {
+                console.warn('Could not load weights:', error);
+                // Continue without weights
+            }
+        }
+        
+        console.log('CNN-Builder model converted successfully');
+        return model;
+        
+    } catch (error) {
+        console.error('Error converting CNN-Builder model:', error);
+        throw error;
+    }
+}
+
+// Load weights from CNN-Builder format into TensorFlow.js model
+async function loadCNNBuilderWeights(model, weightsData) {
+    try {
+        const layerWeights = weightsData.layerWeights;
+        
+        for (let i = 0; i < layerWeights.length; i++) {
+            const layerWeight = layerWeights[i];
+            const modelLayer = model.layers[layerWeight.layerIndex];
+            
+            if (!modelLayer) {
+                console.warn(`Model layer ${layerWeight.layerIndex} not found`);
+                continue;
+            }
+            
+            // Convert weight data back to tensors
+            const weightTensors = layerWeight.weights.map(weight => {
+                return tf.tensor(weight.values, weight.shape);
+            });
+            
+            if (weightTensors.length > 0) {
+                modelLayer.setWeights(weightTensors);
+                
+                // Clean up tensors
+                weightTensors.forEach(tensor => tensor.dispose());
+            }
+        }
+    } catch (error) {
+        console.error('Error loading CNN-Builder weights:', error);
+        throw error;
+    }
 }
 
 async function handleCustomModelFiles(event) {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
     
+    console.log('Loading custom model files:', files.map(f => f.name));
+    
     try {
         showStatus('Loading custom model...', true);
+        
+        // Check if TensorFlow.js is available
+        if (typeof tf === 'undefined') {
+            showStatus('❌ TensorFlow.js not loaded. Please wait and try again.');
+            return;
+        }
         
         // Clean up existing model
         if (model && !model.isDisposedInternal) {
@@ -253,62 +492,106 @@ async function handleCustomModelFiles(event) {
             }
         }
         
-        // Check if we have both model.json and weights file(s)
-        const modelJsonFile = files.find(f => f.name.endsWith('.json'));
+        // Check if we have CNN-Builder JSON files, TensorFlow.js files, or H5 files
+        const jsonFiles = files.filter(f => f.name.endsWith('.json'));
         const weightsFiles = files.filter(f => f.name.includes('.bin') || f.name.endsWith('.h5'));
+        const h5Files = files.filter(f => f.name.endsWith('.h5'));
         
-        if (!modelJsonFile) {
-            showStatus('❌ Please select a model.json file');
+        console.log('JSON files:', jsonFiles.map(f => f.name));
+        console.log('Weights files:', weightsFiles.map(f => f.name));
+        console.log('H5 files:', h5Files.map(f => f.name));
+        
+        if (jsonFiles.length === 0 && h5Files.length === 0) {
+            showStatus('❌ Please select either a JSON file (CNN-Builder or TensorFlow.js) or an .h5 file');
             return;
         }
         
-        if (weightsFiles.length === 0) {
-            // Try to load as a single .h5 file or standalone model.json
+        // Case 1: Single .h5 file
+        if (h5Files.length === 1 && jsonFiles.length === 0) {
+            console.log('Loading single .h5 file...');
             try {
-                // For .h5 files, use tf.loadLayersModel with file object
-                if (files.length === 1 && files[0].name.endsWith('.h5')) {
-                    const fileUrl = URL.createObjectURL(files[0]);
-                    model = await tf.loadLayersModel(fileUrl);
-                    URL.revokeObjectURL(fileUrl);
-                } else {
-                    // For model.json without weights, try to load it anyway
-                    const modelText = await modelJsonFile.text();
-                    const modelConfig = JSON.parse(modelText);
-                    
-                    // Create model from config (weights will be random)
-                    model = await tf.models.modelFromJSON(modelConfig);
-                    showStatus('⚠️ Model loaded without weights (random initialization)', false);
-                }
+                const fileUrl = URL.createObjectURL(h5Files[0]);
+                console.log('Loading from URL:', fileUrl);
+                model = await tf.loadLayersModel(fileUrl);
+                URL.revokeObjectURL(fileUrl);
+                console.log('H5 model loaded successfully');
             } catch (error) {
-                showStatus('❌ Error: Need both model.json and weight files for complete model');
-                return;
-            }
-        } else {
-            // Load model with weights
-            try {
-                // Create URLs for all files
-                const modelUrl = URL.createObjectURL(modelJsonFile);
-                const weightsUrls = weightsFiles.map(f => URL.createObjectURL(f));
-                
-                // Create a handler that provides the weight files
-                const weightPathPrefix = weightsUrls[0].split('/').slice(0, -1).join('/') + '/';
-                
-                model = await tf.loadLayersModel(modelUrl, {
-                    onProgress: (fraction) => {
-                        showStatus(`Loading model... ${Math.round(fraction * 100)}%`, true);
-                    }
-                });
-                
-                // Clean up URLs
-                URL.revokeObjectURL(modelUrl);
-                weightsUrls.forEach(url => URL.revokeObjectURL(url));
-                
-            } catch (error) {
-                showStatus('❌ Error loading model with weights. Try loading as .h5 file or check file compatibility.');
-                console.error('Model loading error:', error);
+                console.error('Error loading .h5 file:', error);
+                showStatus('❌ Error loading .h5 file: ' + error.message);
                 return;
             }
         }
+        // Case 2: JSON file (could be CNN-Builder or TensorFlow.js format)
+        else if (jsonFiles.length > 0) {
+            const jsonFile = jsonFiles[0];
+            console.log('Loading JSON file...');
+            
+            try {
+                const jsonText = await jsonFile.text();
+                const jsonData = JSON.parse(jsonText);
+                
+                // Check if this is a CNN-Builder format (has layers array with custom structure)
+                if (jsonData.layers && Array.isArray(jsonData.layers) && jsonData.layers.length > 0) {
+                    const firstLayer = jsonData.layers[0];
+                    
+                    // CNN-Builder format detection
+                    if (firstLayer.type && typeof firstLayer.type === 'string' && 
+                        ['Conv2D', 'ReLU', 'MaxPooling2D', 'BatchNormalization', 'Dropout', 'Flatten', 'Dense', 'Softmax'].includes(firstLayer.type)) {
+                        
+                        console.log('Detected CNN-Builder format, converting...');
+                        model = await convertCNNBuilderToTensorFlow(jsonData);
+                        
+                        if (model) {
+                            console.log('CNN-Builder model converted successfully');
+                        } else {
+                            showStatus('❌ Failed to convert CNN-Builder model');
+                            return;
+                        }
+                    }
+                    // TensorFlow.js format detection
+                    else if (firstLayer.className || firstLayer.config) {
+                        console.log('Detected TensorFlow.js format...');
+                        
+                        if (weightsFiles.length === 0) {
+                            // Load model without weights
+                            model = await tf.models.modelFromJSON(jsonData);
+                            showStatus('⚠️ TensorFlow.js model loaded without weights (random initialization)', false);
+                        } else {
+                            // Try to load with weights
+                            try {
+                                const modelUrl = URL.createObjectURL(jsonFile);
+                                model = await tf.loadLayersModel(modelUrl);
+                                URL.revokeObjectURL(modelUrl);
+                            } catch (error) {
+                                console.warn('Failed to load with weights, trying without:', error);
+                                model = await tf.models.modelFromJSON(jsonData);
+                                showStatus('⚠️ TensorFlow.js model loaded without weights (could not load weight files)', false);
+                            }
+                        }
+                    }
+                    else {
+                        showStatus('❌ Unrecognized JSON format. Expected CNN-Builder or TensorFlow.js format.');
+                        return;
+                    }
+                }
+                else {
+                    showStatus('❌ Invalid JSON format. Missing or invalid layers array.');
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('Error loading JSON file:', error);
+                showStatus('❌ Error loading JSON file: ' + error.message);
+                return;
+            }
+        }
+        
+        if (!model) {
+            showStatus('❌ Failed to load model');
+            return;
+        }
+        
+        console.log('Model loaded successfully:', model);
         
         // Extract layer information
         layers = model.layers.map((layer, index) => {
