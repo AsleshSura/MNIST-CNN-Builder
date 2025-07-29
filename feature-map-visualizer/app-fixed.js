@@ -1186,13 +1186,13 @@ async function displayFeatureMaps(featureMaps, layer) {
             overflow-x: auto;
             margin-bottom: 15px;
             width: 100%;
-            min-height: 350px;
+            min-height: 450px;
         `;
         
         // Calculate responsive dimensions
         const containerWidth = document.querySelector('.visualization').offsetWidth - 60; // Account for padding
         const barWidth = Math.max(Math.min(containerWidth / units - 2, 40), 8); // Responsive bar width
-        const chartHeight = Math.max(250, Math.min(400, window.innerHeight * 0.3)); // Responsive height
+        const chartHeight = Math.max(350, Math.min(500, window.innerHeight * 0.4)); // Increased height
         
         const barsContainer = document.createElement('div');
         barsContainer.style.cssText = `
